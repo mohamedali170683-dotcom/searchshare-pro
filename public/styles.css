@@ -343,19 +343,28 @@ body {
 .project-card {
     position: relative;
     padding: var(--space-6);
+    background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+    border: 1px solid var(--border-light);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .project-card::before {
     content: '';
     position: absolute;
     left: 0;
-    top: var(--space-6);
-    bottom: var(--space-6);
+    top: 0;
+    bottom: 0;
     width: 4px;
-    border-radius: 2px;
-    background: var(--accent-purple);
+    border-radius: 4px 0 0 4px;
+    background: linear-gradient(180deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
     opacity: 0;
     transition: var(--transition-fast);
+}
+
+.project-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+    border-color: var(--accent-blue);
 }
 
 .project-card:hover::before {
@@ -366,84 +375,133 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: var(--space-4);
+    margin-bottom: var(--space-5);
 }
 
 .project-name {
-    font-size: 17px;
+    font-size: 18px;
     font-weight: 600;
     color: var(--text-primary);
     margin-bottom: var(--space-1);
+    letter-spacing: -0.3px;
 }
 
 .project-client {
     font-size: 13px;
     color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.project-client::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-blue);
+    opacity: 0.5;
 }
 
 .project-status {
-    padding: var(--space-1) var(--space-3);
+    padding: var(--space-2) var(--space-4);
     border-radius: var(--radius-full);
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.project-status::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
 }
 
 .project-status.growing {
-    background: rgba(52, 199, 89, 0.12);
+    background: linear-gradient(135deg, rgba(52, 199, 89, 0.15) 0%, rgba(52, 199, 89, 0.08) 100%);
     color: var(--growing);
 }
 
+.project-status.growing::before {
+    background: var(--growing);
+    box-shadow: 0 0 8px var(--growing);
+}
+
 .project-status.declining {
-    background: rgba(255, 59, 48, 0.12);
+    background: linear-gradient(135deg, rgba(255, 59, 48, 0.15) 0%, rgba(255, 59, 48, 0.08) 100%);
     color: var(--declining);
 }
 
+.project-status.declining::before {
+    background: var(--declining);
+    box-shadow: 0 0 8px var(--declining);
+}
+
 .project-status.stable {
-    background: rgba(0, 0, 0, 0.05);
+    background: rgba(0, 0, 0, 0.04);
     color: var(--text-secondary);
 }
 
+.project-status.stable::before {
+    background: var(--text-tertiary);
+}
+
 .project-metrics {
-    display: flex;
-    gap: var(--space-6);
-    padding: var(--space-4) 0;
-    border-top: 1px solid var(--border-light);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-4);
+    padding: var(--space-5);
+    background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f4 100%);
+    border-radius: var(--radius-lg);
     margin-top: var(--space-4);
 }
 
 .project-metric {
-    flex: 1;
+    text-align: center;
+    padding: var(--space-2);
 }
 
 .project-metric-value {
-    font-size: 24px;
+    font-size: 28px;
     font-weight: 700;
     line-height: 1;
+    letter-spacing: -0.5px;
 }
 
 .project-metric-value.sos {
-    color: var(--sos-color);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .project-metric-value.sov {
-    color: var(--sov-color);
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .project-metric-label {
     font-size: 11px;
-    color: var(--text-tertiary);
+    color: var(--text-secondary);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-top: var(--space-1);
+    letter-spacing: 0.8px;
+    margin-top: var(--space-2);
+    font-weight: 500;
 }
 
 .project-metric-change {
-    font-size: 13px;
-    font-weight: 500;
+    font-size: 14px;
+    font-weight: 600;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 2px;
 }
 
@@ -530,51 +588,66 @@ body {
 .stats-row {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-4);
-    margin-bottom: var(--space-6);
+    gap: var(--space-5);
+    margin-bottom: var(--space-8);
 }
 
 .stat-card {
-    padding: var(--space-5);
+    padding: var(--space-6);
     display: flex;
     align-items: center;
-    gap: var(--space-4);
+    gap: var(--space-5);
+    background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+    border: 1px solid var(--border-light);
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
 }
 
 .stat-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: var(--radius-md);
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-lg);
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
 
 .stat-icon.blue {
-    background: rgba(0, 122, 255, 0.12);
+    background: linear-gradient(135deg, rgba(0, 122, 255, 0.15) 0%, rgba(90, 200, 250, 0.1) 100%);
     color: var(--accent-blue);
+    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.15);
 }
 
 .stat-icon.green {
-    background: rgba(52, 199, 89, 0.12);
+    background: linear-gradient(135deg, rgba(52, 199, 89, 0.15) 0%, rgba(48, 209, 88, 0.1) 100%);
     color: var(--growing);
+    box-shadow: 0 4px 12px rgba(52, 199, 89, 0.15);
 }
 
 .stat-icon.red {
-    background: rgba(255, 59, 48, 0.12);
+    background: linear-gradient(135deg, rgba(255, 59, 48, 0.15) 0%, rgba(255, 69, 58, 0.1) 100%);
     color: var(--declining);
+    box-shadow: 0 4px 12px rgba(255, 59, 48, 0.15);
 }
 
 .stat-value {
-    font-size: 28px;
+    font-size: 36px;
     font-weight: 700;
     line-height: 1;
+    letter-spacing: -1px;
+    color: var(--text-primary);
 }
 
 .stat-label {
-    font-size: 13px;
+    font-size: 14px;
     color: var(--text-secondary);
-    margin-top: var(--space-1);
+    margin-top: var(--space-2);
+    font-weight: 500;
 }
 
 /* ===================================

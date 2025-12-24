@@ -1004,6 +1004,7 @@ async function fetchSerpPositions() {
 async function fetchSOSTrends(project) {
     const statusEl = document.getElementById('trends-fetch-status');
     const summaryEl = document.getElementById('trend-summary');
+    const trendChangeEl = document.getElementById('trend-change');
 
     if (!currentUser?.hasApiCredentials) {
         showFetchStatus(statusEl, 'error', 'API not configured. Go to Settings to add credentials.');
@@ -1029,16 +1030,145 @@ async function fetchSOSTrends(project) {
             return;
         }
 
-        // Calculate basic trend display
-        const brandData = historicalData[brandName.toLowerCase()];
-        if (brandData) {
-            document.getElementById('sos-now').textContent = '--';
-            document.getElementById('sos-6m').textContent = '--';
-            document.getElementById('sos-12m').textContent = '--';
-            summaryEl.classList.remove('hidden');
+        // Process historical data to calculate SOS over time
+        const brandKey = brandName.toLowerCase();
+        const brandHistory = historicalData[brandKey] || [];
+
+        // Get data points sorted by date (oldest first)
+        const sortedBrandHistory = [...brandHistory].sort((a, b) =>
+            new Date(a.year, a.month - 1) - new Date(b.year, b.month - 1)
+        );
+
+        // Calculate SOS for each month
+        const sosHistory = [];
+        const monthlyTotals = {};
+
+        // First, aggregate all brands' monthly data
+        Object.entries(historicalData).forEach(([brand, months]) => {
+            months.forEach(m => {
+                const key = `${m.year}-${m.month}`;
+                if (!monthlyTotals[key]) {
+                    monthlyTotals[key] = { total: 0, brandVolume: 0, year: m.year, month: m.month };
+                }
+                monthlyTotals[key].total += m.volume;
+                if (brand === brandKey) {
+                    monthlyTotals[key].brandVolume = m.volume;
+                }
+            });
+        });
+
+        // Calculate SOS for each month
+        Object.entries(monthlyTotals)
+            .sort((a, b) => {
+                const [aYear, aMonth] = a[0].split('-').map(Number);
+                const [bYear, bMonth] = b[0].split('-').map(Number);
+                return new Date(aYear, aMonth - 1) - new Date(bYear, bMonth - 1);
+            })
+            .forEach(([key, data]) => {
+                const sos = data.total > 0 ? (data.brandVolume / data.total) * 100 : 0;
+                sosHistory.push({
+                    date: key,
+                    year: data.year,
+                    month: data.month,
+                    sos: sos,
+                    brandVolume: data.brandVolume,
+                    totalVolume: data.total
+                });
+            });
+
+        if (sosHistory.length === 0) {
+            showFetchStatus(statusEl, 'warning', 'No trend data could be calculated');
+            return;
         }
 
-        showFetchStatus(statusEl, 'success', 'Trend data updated');
+        // Get specific time periods
+        const now = sosHistory[sosHistory.length - 1];
+        const sixMonthsAgo = sosHistory[Math.max(0, sosHistory.length - 7)] || now;
+        const twelveMonthsAgo = sosHistory[0] || now;
+
+        // Update trend summary
+        document.getElementById('sos-now').textContent = `${now.sos.toFixed(1)}%`;
+        document.getElementById('sos-6m').textContent = `${sixMonthsAgo.sos.toFixed(1)}%`;
+        document.getElementById('sos-12m').textContent = `${twelveMonthsAgo.sos.toFixed(1)}%`;
+
+        // Calculate total change
+        const totalChange = now.sos - twelveMonthsAgo.sos;
+        const changeClass = totalChange >= 0 ? 'positive' : 'negative';
+        trendChangeEl.innerHTML = `
+            <span class="change-value ${changeClass}">${totalChange >= 0 ? '+' : ''}${totalChange.toFixed(1)}pp</span>
+            <span class="change-label">12mo change</span>
+        `;
+
+        summaryEl.classList.remove('hidden');
+
+        // Update the trend chart with historical SOS data
+        if (charts.trend) {
+            charts.trend.destroy();
+        }
+
+        const canvas = document.getElementById('trend-chart');
+        if (canvas) {
+            const labels = sosHistory.map(d => {
+                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                return `${monthNames[d.month - 1]} ${d.year}`;
+            });
+
+            charts.trend = new Chart(canvas, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Share of Search (%)',
+                        data: sosHistory.map(d => d.sos.toFixed(1)),
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#6366f1',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(24, 24, 27, 0.95)',
+                            titleColor: '#fafafa',
+                            bodyColor: '#a1a1aa',
+                            padding: 12,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: (ctx) => `SOS: ${ctx.raw}%`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                            ticks: { color: '#71717a', maxRotation: 45 }
+                        },
+                        y: {
+                            grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                            ticks: {
+                                color: '#71717a',
+                                callback: (value) => `${value}%`
+                            },
+                            min: 0,
+                            suggestedMax: Math.max(...sosHistory.map(d => d.sos)) + 10
+                        }
+                    }
+                }
+            });
+        }
+
+        showFetchStatus(statusEl, 'success', `Loaded ${sosHistory.length} months of trend data`);
     } catch (error) {
         showFetchStatus(statusEl, 'error', error.message);
     }
