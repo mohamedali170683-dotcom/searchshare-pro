@@ -1,4 +1,5 @@
 import { requireAuth } from '../../lib/auth.js';
+import { getDataForSeoCredentials, getAuthHeader } from '../../lib/dataforseo.js';
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -7,17 +8,17 @@ export default async function handler(req, res) {
   const user = await requireAuth(req, res);
   if (!user) return;
 
-  if (!user.dataForSeoLogin || !user.dataForSeoPassword) {
-    return res.status(400).json({ error: 'DataForSEO credentials not configured' });
+  const credentials = getDataForSeoCredentials(user);
+
+  if (!credentials) {
+    return res.status(400).json({ error: 'DataForSEO credentials not configured. Set DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD environment variables.' });
   }
 
   try {
-    const credentials = Buffer.from(`${user.dataForSeoLogin}:${user.dataForSeoPassword}`).toString('base64');
-
     const response = await fetch('https://api.dataforseo.com/v3/appendix/user_data', {
       method: 'POST',
       headers: {
-        'Authorization': `Basic ${credentials}`,
+        'Authorization': getAuthHeader(credentials),
         'Content-Type': 'application/json'
       },
       body: JSON.stringify([{}])
@@ -31,7 +32,8 @@ export default async function handler(req, res) {
 
     res.json({
       success: true,
-      balance: data.tasks?.[0]?.result?.[0]?.money?.balance || 0
+      balance: data.tasks?.[0]?.result?.[0]?.money?.balance || 0,
+      source: credentials.source
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });

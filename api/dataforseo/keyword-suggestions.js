@@ -1,4 +1,5 @@
 import { requireAuth } from '../../lib/auth.js';
+import { getDataForSeoCredentials, getAuthHeader } from '../../lib/dataforseo.js';
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -7,7 +8,9 @@ export default async function handler(req, res) {
   const user = await requireAuth(req, res);
   if (!user) return;
 
-  if (!user.dataForSeoLogin || !user.dataForSeoPassword) {
+  const credentials = getDataForSeoCredentials(user);
+
+  if (!credentials) {
     return res.status(400).json({ error: 'DataForSEO credentials not configured' });
   }
 
@@ -18,12 +21,10 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Seed keyword required' });
     }
 
-    const credentials = Buffer.from(`${user.dataForSeoLogin}:${user.dataForSeoPassword}`).toString('base64');
-
     const response = await fetch('https://api.dataforseo.com/v3/dataforseo_labs/google/keyword_suggestions/live', {
       method: 'POST',
       headers: {
-        'Authorization': `Basic ${credentials}`,
+        'Authorization': getAuthHeader(credentials),
         'Content-Type': 'application/json'
       },
       body: JSON.stringify([{

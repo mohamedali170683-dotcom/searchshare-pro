@@ -1,4 +1,5 @@
 import { requireAuth } from '../../lib/auth.js';
+import { hasCredentials } from '../../lib/dataforseo.js';
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
@@ -14,7 +15,7 @@ export default async function handler(req, res) {
         id: user.id,
         email: user.email,
         name: user.name,
-        hasApiCredentials: !!(user.dataForSeoLogin && user.dataForSeoPassword),
+        hasApiCredentials: hasCredentials(user),
         createdAt: user.createdAt
       }
     });
