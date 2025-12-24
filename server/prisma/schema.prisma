@@ -1,0 +1,128 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String
+  name          String?
+
+  // DataForSEO API credentials (stored securely)
+  dataForSeoLogin    String?
+  dataForSeoPassword String?
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  projects      Project[]
+
+  @@index([email])
+}
+
+model Project {
+  id          String    @id @default(cuid())
+  name        String
+  client      String?
+
+  // Owner relationship
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Related entities
+  brand       Brand?
+  competitors Competitor[]
+  keywords    MarketKeyword[]
+  snapshots   Snapshot[]
+
+  // Cached current metrics (denormalized for dashboard performance)
+  currentSOS    Float?
+  currentSOV    Float?
+  currentGap    Float?
+  currentStatus String?   @default("neutral")
+
+  @@index([userId])
+}
+
+model Brand {
+  id        String   @id @default(cuid())
+  name      String
+  domain    String?
+  volume    Int      @default(0)
+
+  projectId String   @unique
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Competitor {
+  id        String   @id @default(cuid())
+  name      String
+  domain    String?
+  volume    Int      @default(0)
+  sortOrder Int      @default(0)
+
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+model MarketKeyword {
+  id        String   @id @default(cuid())
+  keyword   String
+  volume    Int      @default(0)
+  sortOrder Int      @default(0)
+
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  positions Position[]
+
+  @@index([projectId])
+}
+
+model Position {
+  id          String   @id @default(cuid())
+  brandName   String
+  position    Int?
+
+  keywordId   String
+  keyword     MarketKeyword @relation(fields: [keywordId], references: [id], onDelete: Cascade)
+
+  @@unique([keywordId, brandName])
+  @@index([keywordId])
+}
+
+model Snapshot {
+  id                String   @id @default(cuid())
+  date              String
+  timestamp         DateTime @default(now())
+
+  // Volumes
+  brandVolume       Int      @default(0)
+  totalBrandVolume  Int      @default(0)
+  totalMarketVolume Int      @default(0)
+  visibleVolume     Int      @default(0)
+
+  // Calculated metrics
+  sos               Float    @default(0)
+  sov               Float    @default(0)
+  gap               Float    @default(0)
+  status            String   @default("neutral")
+
+  // All brands data (JSON for flexibility)
+  allBrandsData     Json?
+
+  projectId         String
+  project           Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, timestamp])
+}

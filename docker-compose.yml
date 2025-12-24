@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: searchshare-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: searchshare
+      POSTGRES_PASSWORD: searchshare_dev_password
+      POSTGRES_DB: searchshare_pro
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U searchshare -d searchshare_pro"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API Server
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: searchshare-server
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      DATABASE_URL: postgresql://searchshare:searchshare_dev_password@postgres:5432/searchshare_pro
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      JWT_EXPIRES_IN: 7d
+      CORS_ORIGIN: http://localhost:3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./server/src:/app/src:ro
+    command: npm run dev
+
+  # Frontend Client (for development)
+  client:
+    image: node:20-alpine
+    container_name: searchshare-client
+    working_dir: /app
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./client:/app
+    command: npx serve public -l 3000
+    depends_on:
+      - server
+
+volumes:
+  postgres_data:
