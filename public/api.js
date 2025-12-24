@@ -3,9 +3,8 @@
  * Handles all communication with the backend server
  */
 
-const API_BASE_URL = window.location.hostname === 'localhost'
-  ? 'http://localhost:3001/api'
-  : '/api';
+// API base URL - works with Vercel serverless functions
+const API_BASE_URL = '/api';
 
 // Token storage
 let authToken = localStorage.getItem('searchshare_token');

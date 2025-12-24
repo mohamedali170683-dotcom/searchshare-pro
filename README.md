@@ -1,12 +1,12 @@
 # SearchShare Pro
 
-A professional Share of Search (SOS) and Share of Voice (SOV) analytics platform for agencies and brands. Built as a full-stack application with user authentication and cloud-ready deployment.
+A professional Share of Search (SOS) and Share of Voice (SOV) analytics platform for agencies and brands. Built for deployment on Vercel with Postgres.
 
 ## Features
 
 - **Share of Search Analysis**: Calculate your brand's search visibility vs competitors
 - **Share of Voice Metrics**: Visibility-weighted analysis based on SERP positions
-- **Growth Gap Analysis**: SOV - SOS gap indicates market share trajectory (Binet & Field research)
+- **Growth Gap Analysis**: SOV - SOS gap indicates market share trajectory
 - **User Authentication**: Secure signup/login with JWT tokens
 - **DataForSEO Integration**: Optional live data from DataForSEO API
 - **Project Management**: Create, track, and compare multiple brand analyses
@@ -14,105 +14,120 @@ A professional Share of Search (SOS) and Share of Voice (SOV) analytics platform
 
 ## Tech Stack
 
-### Backend
-- **Node.js** with Express.js
-- **PostgreSQL** database
-- **Prisma** ORM
-- **JWT** authentication
-- **Zod** validation
+- **Frontend**: Vanilla JavaScript (ES6+), Chart.js, jsPDF
+- **Backend**: Vercel Serverless Functions
+- **Database**: Vercel Postgres (PostgreSQL)
+- **ORM**: Prisma
+- **Auth**: JWT tokens with bcrypt
 
-### Frontend
-- **Vanilla JavaScript** (ES6+)
-- **Chart.js** for visualizations
-- **jsPDF** for report generation
-- **Apple-inspired** glassmorphism design
+## Deploy to Vercel
 
-## Quick Start
+### One-Click Deploy
 
-### Prerequisites
-- Node.js 18+
-- PostgreSQL 14+ (or use Docker)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/YOUR_USERNAME/searchshare-pro)
 
-### Using Docker (Recommended)
+### Manual Deployment
 
-```bash
-# Start all services
-docker-compose up -d
+1. **Push to GitHub**
+   ```bash
+   git push origin main
+   ```
 
-# The app will be available at:
-# - Frontend: http://localhost:3000
-# - API: http://localhost:3001
-```
+2. **Import to Vercel**
+   - Go to [vercel.com/new](https://vercel.com/new)
+   - Import your GitHub repository
+   - Vercel will auto-detect the configuration
 
-### Manual Setup
+3. **Add Vercel Postgres**
+   - In your Vercel project, go to **Storage** tab
+   - Click **Create Database** → **Postgres**
+   - This automatically adds the required environment variables
+
+4. **Add Environment Variables**
+   In Vercel project settings → Environment Variables:
+   ```
+   JWT_SECRET=your-super-secret-jwt-key-min-32-chars
+   JWT_EXPIRES_IN=7d
+   ```
+
+5. **Deploy**
+   - Vercel will automatically build and deploy
+   - Prisma migrations run on first API call
+
+## Local Development
 
 1. **Install dependencies**
-```bash
-npm run install:all
-```
+   ```bash
+   npm install
+   ```
 
 2. **Set up environment**
-```bash
-cp .env.example server/.env
-# Edit server/.env with your database credentials
-```
+   ```bash
+   cp .env.example .env.local
+   # Edit .env.local with your database credentials
+   ```
 
-3. **Set up database**
-```bash
-cd server
-npm run db:push
-```
+3. **Generate Prisma client**
+   ```bash
+   npx prisma generate
+   npx prisma db push
+   ```
 
-4. **Start development servers**
-```bash
-npm run dev
-```
+4. **Run development server**
+   ```bash
+   npx vercel dev
+   ```
 
 ## Project Structure
 
 ```
 searchshare-pro/
-├── client/                 # Frontend application
-│   └── public/
-│       ├── index.html      # Main HTML
-│       ├── styles.css      # Apple-inspired styles
-│       ├── app.js          # Main application
-│       └── api.js          # API client
-│
-├── server/                 # Backend API
-│   ├── src/
-│   │   ├── app.js          # Express app
-│   │   ├── routes/         # API routes
-│   │   ├── services/       # Business logic
-│   │   └── middleware/     # Auth, error handling
-│   └── prisma/
-│       └── schema.prisma   # Database schema
-│
-├── docker-compose.yml      # Docker configuration
-└── package.json            # Root monorepo config
+├── api/                    # Vercel Serverless Functions
+│   ├── auth/
+│   │   ├── signup.js
+│   │   ├── login.js
+│   │   ├── me.js
+│   │   └── api-credentials.js
+│   ├── projects/
+│   │   ├── index.js
+│   │   ├── [id].js
+│   │   └── [id]/
+│   │       ├── snapshot.js
+│   │       └── recommendations.js
+│   └── dataforseo/
+│       ├── test.js
+│       ├── volumes.js
+│       └── ...
+├── lib/                    # Shared utilities
+│   ├── prisma.js
+│   ├── auth.js
+│   └── calculations.js
+├── prisma/
+│   └── schema.prisma
+├── public/                 # Static frontend
+│   ├── index.html
+│   ├── app.js
+│   ├── api.js
+│   └── styles.css
+├── vercel.json
+└── package.json
 ```
 
 ## API Endpoints
 
-### Authentication
-- `POST /api/auth/signup` - Create account
-- `POST /api/auth/login` - Login
-- `GET /api/auth/me` - Get profile
-- `PUT /api/auth/api-credentials` - Update DataForSEO credentials
-
-### Projects
-- `GET /api/projects` - List all projects
-- `POST /api/projects` - Create project
-- `GET /api/projects/:id` - Get project details
-- `PUT /api/projects/:id` - Update project
-- `DELETE /api/projects/:id` - Delete project
-- `POST /api/projects/:id/snapshot` - Create snapshot
-
-### DataForSEO Proxy
-- `POST /api/dataforseo/test` - Test connection
-- `POST /api/dataforseo/volumes` - Get search volumes
-- `POST /api/dataforseo/keyword-suggestions` - Get keyword suggestions
-- `POST /api/dataforseo/serp-positions` - Get SERP positions
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/signup` | Create account |
+| POST | `/api/auth/login` | Login |
+| GET | `/api/auth/me` | Get profile |
+| PUT | `/api/auth/api-credentials` | Update DataForSEO credentials |
+| GET | `/api/projects` | List projects |
+| POST | `/api/projects` | Create project |
+| GET | `/api/projects/:id` | Get project |
+| PUT | `/api/projects/:id` | Update project |
+| DELETE | `/api/projects/:id` | Delete project |
+| POST | `/api/projects/:id/snapshot` | Create snapshot |
+| GET | `/api/projects/:id/recommendations` | Get recommendations |
 
 ## Calculations
 
@@ -120,50 +135,30 @@ searchshare-pro/
 ```
 SOS = Brand Volume / Total Brand Volumes × 100
 ```
-Measures brand demand relative to competitors.
 
 ### Share of Voice (SOV)
 ```
 SOV = Visible Volume / Total Market Volume × 100
-
 Visible Volume = Σ(Keyword Volume × CTR(position))
 ```
-CTR model: Position 1 = 31.6%, Position 2 = 15.8%, etc.
 
 ### Growth Gap
 ```
 Gap = SOV - SOS
-
-Gap > 5pp  → Strong Growth Position (excess voice predicts growth)
-Gap < -5pp → Visibility Gap (at-risk, needs SEO investment)
-Gap ≈ 0    → Balanced (stable but static)
+Gap > 5pp  → Growing (excess voice predicts growth)
+Gap < -5pp → At Risk (needs SEO investment)
 ```
 
 ## Environment Variables
 
 | Variable | Description | Required |
 |----------|-------------|----------|
-| `DATABASE_URL` | PostgreSQL connection string | Yes |
-| `JWT_SECRET` | Secret for signing JWTs (32+ chars) | Yes |
+| `POSTGRES_PRISMA_URL` | Postgres connection (pooled) | Yes* |
+| `POSTGRES_URL_NON_POOLING` | Postgres direct connection | Yes* |
+| `JWT_SECRET` | Secret for JWT signing | Yes |
 | `JWT_EXPIRES_IN` | Token expiration (e.g., "7d") | No |
-| `PORT` | Server port (default: 3001) | No |
-| `CORS_ORIGIN` | Allowed frontend origin | Yes |
 
-## Deployment
-
-### Railway
-1. Create PostgreSQL database
-2. Deploy server with environment variables
-3. Deploy client (static files)
-
-### Vercel + Railway
-1. Vercel for frontend
-2. Railway for backend + database
-
-### Docker
-```bash
-docker-compose -f docker-compose.prod.yml up -d
-```
+*Automatically set by Vercel Postgres
 
 ## License
 

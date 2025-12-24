@@ -3,22 +3,22 @@
   "version": "1.0.0",
   "description": "SearchShare Pro - Share of Search & Voice Analytics Platform",
   "private": true,
-  "workspaces": [
-    "client",
-    "server"
-  ],
+  "type": "module",
   "scripts": {
-    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
-    "dev:server": "cd server && npm run dev",
-    "dev:client": "cd client && npm run dev",
-    "start": "cd server && npm start",
-    "db:generate": "cd server && npm run db:generate",
-    "db:push": "cd server && npm run db:push",
-    "db:migrate": "cd server && npm run db:migrate",
-    "install:all": "npm install && cd server && npm install && cd ../client && npm install"
+    "build": "prisma generate",
+    "postinstall": "prisma generate",
+    "dev": "vercel dev",
+    "vercel-build": "prisma generate"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.7.0",
+    "@vercel/postgres": "^0.5.1",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "prisma": "^5.7.0",
+    "vercel": "^33.0.0"
   },
   "engines": {
     "node": ">=18.0.0"
