@@ -1,0 +1,26 @@
+{
+  "name": "searchshare-pro",
+  "version": "1.0.0",
+  "description": "SearchShare Pro - Share of Search & Voice Analytics Platform",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "prisma db push --skip-generate && prisma generate",
+    "postinstall": "prisma generate",
+    "dev": "vercel dev",
+    "vercel-build": "prisma db push --skip-generate && prisma generate"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.7.0",
+    "@vercel/postgres": "^0.5.1",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "prisma": "^5.7.0",
+    "vercel": "^33.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

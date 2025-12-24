@@ -66,6 +66,27 @@
                     </svg>
                     New Project
                 </button>
+                <div class="user-menu" id="user-menu">
+                    <button class="btn-icon user-menu-btn" id="user-menu-btn" title="Account">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                    </button>
+                    <div class="user-dropdown hidden" id="user-dropdown">
+                        <div class="user-info" id="user-info">
+                            <span class="user-email"></span>
+                        </div>
+                        <button class="dropdown-item" id="logout-btn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                                <polyline points="16 17 21 12 16 7"/>
+                                <line x1="21" y1="12" x2="9" y2="12"/>
+                            </svg>
+                            Log Out
+                        </button>
+                    </div>
+                </div>
             </div>
         </nav>
 
@@ -683,8 +704,73 @@
         </div>
     </template>
 
+    <!-- Auth View Template -->
+    <template id="auth-template">
+        <div class="auth-container">
+            <div class="auth-card">
+                <div class="auth-header">
+                    <svg class="auth-logo" width="48" height="48" viewBox="0 0 28 28" fill="none">
+                        <rect width="28" height="28" rx="6" fill="url(#logo-gradient)" />
+                        <circle cx="14" cy="12" r="5" stroke="white" stroke-width="1.5" fill="none" />
+                        <line x1="17.5" y1="15.5" x2="21" y2="19" stroke="white" stroke-width="1.5" stroke-linecap="round" />
+                        <rect x="9" y="21" width="10" height="1.5" rx="0.75" fill="white" opacity="0.6" />
+                    </svg>
+                    <h1>SearchShare<span style="font-weight: 400; opacity: 0.6;">Pro</span></h1>
+                    <p class="auth-subtitle">Share of Search & Voice Analytics</p>
+                </div>
+
+                <div class="auth-tabs">
+                    <button class="auth-tab active" data-tab="login">Log In</button>
+                    <button class="auth-tab" data-tab="signup">Sign Up</button>
+                </div>
+
+                <!-- Login Form -->
+                <form id="login-form" class="auth-form">
+                    <div class="form-group">
+                        <label for="login-email">Email</label>
+                        <input type="email" id="login-email" class="input" placeholder="you@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <input type="password" id="login-password" class="input" placeholder="Enter your password" required>
+                    </div>
+                    <div class="auth-error hidden" id="login-error"></div>
+                    <button type="submit" class="btn btn-primary btn-full">
+                        <span class="btn-text">Log In</span>
+                        <span class="btn-loading hidden">
+                            <span class="loading-spinner"></span>
+                        </span>
+                    </button>
+                </form>
+
+                <!-- Signup Form -->
+                <form id="signup-form" class="auth-form hidden">
+                    <div class="form-group">
+                        <label for="signup-name">Name <span class="optional">(optional)</span></label>
+                        <input type="text" id="signup-name" class="input" placeholder="Your name">
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-email">Email</label>
+                        <input type="email" id="signup-email" class="input" placeholder="you@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-password">Password</label>
+                        <input type="password" id="signup-password" class="input" placeholder="Min 8 characters" required minlength="8">
+                    </div>
+                    <div class="auth-error hidden" id="signup-error"></div>
+                    <button type="submit" class="btn btn-primary btn-full">
+                        <span class="btn-text">Create Account</span>
+                        <span class="btn-loading hidden">
+                            <span class="loading-spinner"></span>
+                        </span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </template>
+
     <!-- Scripts -->
-    <script src="app.js"></script>
+    <script type="module" src="app.js"></script>
 </body>
 
 </html>
