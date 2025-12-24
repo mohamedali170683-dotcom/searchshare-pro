@@ -5,10 +5,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "prisma generate",
+    "build": "prisma db push --skip-generate && prisma generate",
     "postinstall": "prisma generate",
     "dev": "vercel dev",
-    "vercel-build": "prisma generate"
+    "vercel-build": "prisma db push --skip-generate && prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^5.7.0",
