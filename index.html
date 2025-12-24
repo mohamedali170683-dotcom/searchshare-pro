@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SearchShare Pro | Share of Search & Voice Analytics</title>
+    <meta name="description"
+        content="Professional Share of Search and Share of Voice analytics platform for agencies and brands">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- SVG Gradient Definitions -->
+    <svg class="svg-defs" aria-hidden="true">
+        <defs>
+            <linearGradient id="sos-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#af52de" />
+                <stop offset="100%" stop-color="#ff2d55" />
+            </linearGradient>
+            <linearGradient id="sov-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#ff9500" />
+                <stop offset="100%" stop-color="#ff3b30" />
+            </linearGradient>
+            <linearGradient id="logo-gradient" x1="0" y1="0" x2="28" y2="28">
+                <stop offset="0%" stop-color="#007aff" />
+                <stop offset="100%" stop-color="#5ac8fa" />
+            </linearGradient>
+        </defs>
+    </svg>
+
+    <div id="app" class="app">
+        <!-- Top Navigation Bar -->
+        <nav class="top-nav">
+            <div class="nav-left">
+                <a href="#" class="logo">
+                    <svg class="logo-icon" width="28" height="28" viewBox="0 0 28 28" fill="none">
+                        <rect width="28" height="28" rx="6" fill="url(#logo-gradient)" />
+                        <circle cx="14" cy="12" r="5" stroke="white" stroke-width="1.5" fill="none" />
+                        <line x1="17.5" y1="15.5" x2="21" y2="19" stroke="white" stroke-width="1.5"
+                            stroke-linecap="round" />
+                        <rect x="9" y="21" width="10" height="1.5" rx="0.75" fill="white" opacity="0.6" />
+                    </svg>
+                    SearchShare<span style="font-weight: 400; opacity: 0.6;">Pro</span>
+                </a>
+
+                <div class="nav-tabs">
+                    <button class="nav-tab active" data-view="dashboard">Dashboard</button>
+                    <button class="nav-tab" data-view="settings">Settings</button>
+                </div>
+            </div>
+
+            <div class="nav-right">
+                <div class="api-status" id="api-status">
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background: #ff9500;"></span>
+                    <span style="font-size: 13px; color: #86868b;">Demo Mode</span>
+                </div>
+                <button class="btn btn-primary" id="new-project-nav-btn">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                    New Project
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content" id="main-content">
+            <!-- Views are rendered here -->
+        </main>
+    </div>
+
+    <!-- Templates -->
+
+    <!-- Dashboard View -->
+    <template id="dashboard-template">
+        <div class="view dashboard-view">
+            <!-- Stats Row -->
+            <div class="stats-row" id="quick-stats">
+                <div class="card stat-card">
+                    <div class="stat-icon blue">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="stat-value" id="total-projects">0</div>
+                        <div class="stat-label">Projects</div>
+                    </div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-icon green">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polyline points="23,6 13.5,15.5 8.5,10.5 1,18" />
+                            <polyline points="17,6 23,6 23,12" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="stat-value" id="growing-count">0</div>
+                        <div class="stat-label">Growing</div>
+                    </div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-icon red">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polyline points="23,18 13.5,8.5 8.5,13.5 1,6" />
+                            <polyline points="17,18 23,18 23,12" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="stat-value" id="declining-count">0</div>
+                        <div class="stat-label">At Risk</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Projects Header -->
+            <div class="projects-header">
+                <h2 class="projects-title">Your Projects</h2>
+            </div>
+
+            <!-- Projects Grid -->
+            <div class="projects-grid" id="projects-grid">
+                <!-- Project cards rendered here -->
+            </div>
+
+            <!-- Empty State -->
+            <div class="empty-state hidden" id="empty-state">
+                <div class="empty-icon">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="1.5">
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                        <line x1="8" y1="11" x2="14" y2="11" />
+                        <line x1="11" y1="8" x2="11" y2="14" />
+                    </svg>
+                </div>
+                <h3 class="empty-title">No projects yet</h3>
+                <p class="empty-description">Create your first Share of Search analysis to track brand visibility</p>
+                <button class="btn btn-primary" id="empty-new-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                    Create Project
+                </button>
+            </div>
+        </div>
+    </template>
+
+    <!-- Project View -->
+    <template id="project-template">
+        <div class="view project-view">
+            <header class="view-header project-header">
+                <div class="header-left">
+                    <button class="btn-back" id="back-to-dashboard">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <line x1="19" y1="12" x2="5" y2="12" />
+                            <polyline points="12,19 5,12 12,5" />
+                        </svg>
+                    </button>
+                    <div class="project-title">
+                        <h1 id="project-name">Project Name</h1>
+                        <span class="project-client" id="project-client">Client</span>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="btn-secondary" id="refresh-data-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polyline points="23,4 23,10 17,10" />
+                            <polyline points="1,20 1,14 7,14" />
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                        </svg>
+                        Refresh
+                    </button>
+                    <button class="btn-secondary" id="export-pdf-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14,2 14,8 20,8" />
+                            <line x1="16" y1="13" x2="8" y2="13" />
+                            <line x1="16" y1="17" x2="8" y2="17" />
+                        </svg>
+                        Export PDF
+                    </button>
+                    <button class="btn-icon" id="edit-project-btn" title="Edit Project">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                        </svg>
+                    </button>
+                    <button class="btn-icon danger" id="delete-project-btn" title="Delete Project">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                        </svg>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Main Metrics Row -->
+            <div class="metrics-row" id="metrics-row">
+                <!-- SOS Card -->
+                <div class="metric-card sos-metric">
+                    <div class="metric-header">
+                        <span class="metric-label">Share of Search</span>
+                        <span class="metric-badge sos">SOS</span>
+                    </div>
+                    <div class="metric-gauge">
+                        <canvas id="sos-gauge"></canvas>
+                        <div class="gauge-value">
+                            <span class="gauge-number" id="sos-value">--</span>
+                            <span class="gauge-unit">%</span>
+                        </div>
+                    </div>
+                    <div class="metric-footer">
+                        <span class="metric-change positive" id="sos-change">--</span>
+                        <span class="metric-period">vs last month</span>
+                    </div>
+                </div>
+
+                <!-- SOV Card -->
+                <div class="metric-card sov-metric">
+                    <div class="metric-header">
+                        <span class="metric-label">Share of Voice</span>
+                        <span class="metric-badge sov">SOV</span>
+                    </div>
+                    <div class="metric-gauge">
+                        <canvas id="sov-gauge"></canvas>
+                        <div class="gauge-value">
+                            <span class="gauge-number" id="sov-value">--</span>
+                            <span class="gauge-unit">%</span>
+                        </div>
+                    </div>
+                    <div class="metric-footer">
+                        <span class="metric-change positive" id="sov-change">--</span>
+                        <span class="metric-period">vs last month</span>
+                    </div>
+                </div>
+
+                <!-- Growth Gap Card -->
+                <div class="metric-card gap-metric" id="gap-card">
+                    <div class="metric-header">
+                        <span class="metric-label">Growth Gap</span>
+                        <span class="metric-badge gap">SOV - SOS</span>
+                    </div>
+                    <div class="gap-display">
+                        <div class="gap-indicator" id="gap-indicator">
+                            <svg class="gap-icon" width="32" height="32" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <polyline points="23,6 13.5,15.5 8.5,10.5 1,18" />
+                                <polyline points="17,6 23,6 23,12" />
+                            </svg>
+                        </div>
+                        <div class="gap-value">
+                            <span class="gap-number" id="gap-value">--</span>
+                            <span class="gap-unit">pp</span>
+                        </div>
+                        <div class="gap-status" id="gap-status">Calculating...</div>
+                    </div>
+                    <div class="gap-insight" id="gap-insight">
+                        <p>The growth gap indicates market share trajectory based on Binet's ESOV research.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="charts-row">
+                <!-- Competitor Comparison -->
+                <div class="chart-card competitors-chart">
+                    <div class="card-header">
+                        <h3>Competitor Comparison</h3>
+                        <div class="chart-toggle">
+                            <button class="toggle-btn active" data-metric="sos">SOS</button>
+                            <button class="toggle-btn" data-metric="sov">SOV</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="competitors-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Trend Chart -->
+                <div class="chart-card trend-chart">
+                    <div class="card-header">
+                        <h3>SOS Trend Analysis</h3>
+                        <button class="btn-fetch-all" id="fetch-trends-btn">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="23,4 23,10 17,10" />
+                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                            </svg>
+                            Fetch Live Trends
+                        </button>
+                    </div>
+
+                    <!-- Trend Summary Cards -->
+                    <div class="trend-summary hidden" id="trend-summary">
+                        <div class="trend-period">
+                            <span class="trend-label">12 months ago</span>
+                            <span class="trend-value" id="sos-12m">--%</span>
+                        </div>
+                        <div class="trend-arrow">→</div>
+                        <div class="trend-period">
+                            <span class="trend-label">6 months ago</span>
+                            <span class="trend-value" id="sos-6m">--%</span>
+                        </div>
+                        <div class="trend-arrow">→</div>
+                        <div class="trend-period current">
+                            <span class="trend-label">Now</span>
+                            <span class="trend-value" id="sos-now">--%</span>
+                        </div>
+                        <div class="trend-change" id="trend-change">
+                            <!-- Shows total change -->
+                        </div>
+                    </div>
+                    <div class="fetch-status" id="trends-fetch-status"></div>
+
+                    <div class="chart-container">
+                        <canvas id="trend-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Tables -->
+            <div class="data-section">
+                <div class="section-header">
+                    <h3>Detailed Breakdown</h3>
+                    <div class="tabs">
+                        <button class="tab active" data-tab="brands">Brand Volumes</button>
+                        <button class="tab" data-tab="keywords">Market Keywords</button>
+                    </div>
+                </div>
+                <div class="tab-content active" id="brands-tab">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Brand</th>
+                                <th>Volume</th>
+                                <th>SOS</th>
+                                <th>SOV</th>
+                                <th>Gap</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="brands-table-body">
+                            <!-- Rendered dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="tab-content" id="keywords-tab">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Keyword</th>
+                                <th>Volume</th>
+                                <th id="position-headers"><!-- Brand columns --></th>
+                            </tr>
+                        </thead>
+                        <tbody id="keywords-table-body">
+                            <!-- Rendered dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Recommendations -->
+            <div class="recommendations-section">
+                <h3>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                            d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" />
+                    </svg>
+                    Strategic Recommendations
+                </h3>
+                <div class="recommendations" id="recommendations-list">
+                    <!-- Rendered dynamically -->
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- New/Edit Project Modal -->
+    <template id="project-modal-template">
+        <div class="modal-overlay" id="modal-overlay">
+            <div class="modal modal-lg">
+                <div class="modal-header">
+                    <h2 id="modal-title">New Project</h2>
+                    <button class="btn-close" id="modal-close">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- API Status Banner -->
+                <div class="modal-api-status" id="modal-api-status">
+                    <div class="api-mode-demo" id="api-mode-demo">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="12" />
+                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                        </svg>
+                        <span>Demo Mode - <a href="#" id="open-settings-link">Add API credentials</a> to auto-fetch
+                            data</span>
+                    </div>
+                    <div class="api-mode-connected hidden" id="api-mode-connected">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                            <polyline points="22 4 12 14.01 9 11.01" />
+                        </svg>
+                        <span>API Connected - Data will be fetched automatically</span>
+                    </div>
+                </div>
+
+                <!-- Scrollable Modal Body -->
+                <div class="modal-body">
+                    <form id="project-form" class="modal-form">
+                        <!-- Step 1: Project & Brand -->
+                        <div class="form-section">
+                            <h3>Project Details</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Project Name <span class="required">*</span></label>
+                                    <input type="text" id="form-project-name" class="input"
+                                        placeholder="e.g., Nike Q1 2024 Analysis" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Client Name</label>
+                                    <input type="text" id="form-client-name" class="input"
+                                        placeholder="e.g., Nike Inc.">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>Your Brand</h3>
+                            <div class="form-row brand-row">
+                                <div class="form-group flex-2">
+                                    <label>Brand Name <span class="required">*</span></label>
+                                    <input type="text" id="form-brand-name" class="input" placeholder="e.g., Nike"
+                                        required>
+                                </div>
+                                <div class="form-group flex-2">
+                                    <label>Domain</label>
+                                    <input type="text" id="form-brand-domain" class="input"
+                                        placeholder="e.g., nike.com">
+                                </div>
+                                <div class="form-group flex-1">
+                                    <label>Volume</label>
+                                    <div class="input-with-btn">
+                                        <input type="number" id="form-brand-volume" class="input" placeholder="Auto"
+                                            min="0">
+                                        <button type="button" class="btn-fetch" id="fetch-brand-volume-btn"
+                                            title="Fetch from API">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor" stroke-width="2">
+                                                <polyline points="23,4 23,10 17,10" />
+                                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="fetch-status" id="brand-fetch-status"></div>
+                        </div>
+
+                        <!-- Step 2: Competitors -->
+                        <div class="form-section">
+                            <div class="section-header">
+                                <h3>Competitors</h3>
+                                <div class="section-actions">
+                                    <button type="button" class="btn-fetch-all" id="fetch-all-volumes-btn">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <polyline points="23,4 23,10 17,10" />
+                                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                                        </svg>
+                                        Fetch All Volumes
+                                    </button>
+                                    <button type="button" class="btn-add" id="add-competitor-btn">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <line x1="12" y1="5" x2="12" y2="19" />
+                                            <line x1="5" y1="12" x2="19" y2="12" />
+                                        </svg>
+                                        Add
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="competitors-container" class="competitors-container">
+                                <!-- Competitor rows -->
+                            </div>
+                            <div class="fetch-status" id="competitors-fetch-status"></div>
+                        </div>
+
+                        <!-- Step 3: Market Keywords -->
+                        <div class="form-section">
+                            <div class="section-header">
+                                <h3>Market Keywords <span class="optional">(for SOV)</span></h3>
+                                <div class="section-actions">
+                                    <button type="button" class="btn-suggest" id="suggest-keywords-btn">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <circle cx="11" cy="11" r="8" />
+                                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                                        </svg>
+                                        Get Suggestions
+                                    </button>
+                                    <button type="button" class="btn-add" id="add-keyword-btn">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <line x1="12" y1="5" x2="12" y2="19" />
+                                            <line x1="5" y1="12" x2="19" y2="12" />
+                                        </svg>
+                                        Add Manual
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Category seed for keyword suggestions -->
+                            <div class="category-seed-row">
+                                <div class="form-group">
+                                    <label>Industry/Category <span class="hint">(for keyword suggestions)</span></label>
+                                    <input type="text" id="form-category-seed" class="input"
+                                        placeholder="e.g., natural cosmetics, organic skincare, vegan makeup">
+                                </div>
+                            </div>
+
+                            <!-- Keyword Suggestions (shown when fetched) -->
+                            <div class="keyword-suggestions hidden" id="keyword-suggestions">
+                                <p class="suggestions-label">Select keywords to track:</p>
+                                <div class="suggestions-list" id="suggestions-list">
+                                    <!-- Checkboxes rendered here -->
+                                </div>
+                            </div>
+
+                            <!-- Manual keywords -->
+                            <div id="keywords-container" class="keywords-container">
+                                <!-- Keyword rows -->
+                            </div>
+                            <div class="fetch-status" id="keywords-fetch-status"></div>
+                        </div>
+
+                        <!-- Step 4: SERP Positions -->
+                        <div class="form-section positions-section" id="positions-section" style="display: none;">
+                            <div class="section-header">
+                                <h3>SERP Positions</h3>
+                                <button type="button" class="btn-fetch-all" id="fetch-positions-btn">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <polyline points="23,4 23,10 17,10" />
+                                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                                    </svg>
+                                    Fetch Positions
+                                </button>
+                            </div>
+                            <p class="section-desc">Rankings for each brand on each keyword (1-100)</p>
+                            <div class="positions-matrix" id="positions-matrix">
+                                <!-- Generated dynamically -->
+                            </div>
+                            <div class="fetch-status" id="positions-fetch-status"></div>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="generate-positions-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" />
+                            <line x1="3" y1="9" x2="21" y2="9" />
+                            <line x1="9" y1="21" x2="9" y2="9" />
+                        </svg>
+                        Generate Position Matrix
+                    </button>
+                    <button type="submit" form="project-form" class="btn btn-primary">
+                        <span id="submit-text">Create Project</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Settings View -->
+    <template id="settings-template">
+        <div class="view settings-view">
+            <header class="view-header">
+                <h1>Settings</h1>
+            </header>
+
+            <div class="settings-grid">
+                <div class="card settings-card">
+                    <h3>API Configuration</h3>
+                    <p class="card-desc">Connect to DataForSEO for automated data fetching</p>
+
+                    <div class="form-group">
+                        <label>API Login (Email)</label>
+                        <input type="email" id="api-login" class="input" placeholder="your-email@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label>API Password</label>
+                        <input type="password" id="api-password" class="input" placeholder="••••••••••••">
+                    </div>
+                    <div class="api-test">
+                        <button type="button" class="btn-secondary" id="test-api-btn">Test Connection</button>
+                        <span class="api-result" id="api-result"></span>
+                    </div>
+                    <button type="button" class="btn-primary" id="save-api-btn">Save API Settings</button>
+                </div>
+
+                <div class="card settings-card">
+                    <h3>Data Management</h3>
+                    <p class="card-desc">Manage your stored data</p>
+
+                    <div class="data-stats">
+                        <div class="data-stat">
+                            <span class="data-label">Projects stored</span>
+                            <span class="data-value" id="stored-projects">0</span>
+                        </div>
+                        <div class="data-stat">
+                            <span class="data-label">Storage used</span>
+                            <span class="data-value" id="storage-used">0 KB</span>
+                        </div>
+                    </div>
+
+                    <div class="danger-zone">
+                        <h4>Danger Zone</h4>
+                        <button type="button" class="btn-danger" id="clear-data-btn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="3 6 5 6 21 6" />
+                                <path
+                                    d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            </svg>
+                            Clear All Data
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card settings-card">
+                    <h3>About</h3>
+                    <div class="about-content">
+                        <p><strong>SearchShare Pro</strong></p>
+                        <p>Professional Share of Search & Share of Voice analytics platform</p>
+                        <p class="version">Version 1.0.0</p>
+
+                        <div class="formulas-reference">
+                            <h4>Formulas</h4>
+                            <div class="formula-item">
+                                <code>SOS = Brand Volume ÷ Total Brand Volumes</code>
+                                <span>Measures brand demand</span>
+                            </div>
+                            <div class="formula-item">
+                                <code>SOV = Visible Volume ÷ Total Market Volume</code>
+                                <span>Measures SERP visibility</span>
+                            </div>
+                            <div class="formula-item">
+                                <code>Gap = SOV - SOS</code>
+                                <span>Positive = Growing, Negative = At Risk</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Scripts -->
+    <script src="app.js"></script>
+</body>
+
+</html>
