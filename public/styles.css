@@ -2178,6 +2178,194 @@ body {
     font-style: normal;
 }
 
+/* Visible Volume Detailed Breakdown */
+.visible-volume-detail {
+    margin-top: 16px;
+    border-top: 1px solid var(--gray-200);
+    padding-top: 12px;
+}
+
+.btn-toggle-detail {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--primary-600);
+    background: var(--primary-50);
+    border: 1px solid var(--primary-100);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.btn-toggle-detail:hover {
+    background: var(--primary-100);
+}
+
+.btn-toggle-detail svg {
+    transition: transform var(--transition-fast);
+}
+
+.btn-toggle-detail.expanded svg {
+    transform: rotate(180deg);
+}
+
+.visible-breakdown-content {
+    margin-top: 12px;
+    padding: 16px;
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+}
+
+.visible-breakdown-header {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: 12px;
+}
+
+.visible-breakdown-table-wrap {
+    overflow-x: auto;
+    margin-bottom: 12px;
+}
+
+.visible-breakdown-table {
+    width: 100%;
+    font-size: 12px;
+    border-collapse: collapse;
+}
+
+.visible-breakdown-table th {
+    text-align: left;
+    font-weight: 600;
+    color: var(--gray-500);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 8px 10px;
+    border-bottom: 2px solid var(--gray-200);
+    background: var(--gray-50);
+}
+
+.visible-breakdown-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--gray-100);
+    color: var(--gray-700);
+}
+
+.visible-breakdown-table tbody tr:hover {
+    background: var(--gray-50);
+}
+
+.visible-breakdown-table .kw-name {
+    font-weight: 500;
+    color: var(--gray-800);
+    max-width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.visible-breakdown-table .volume-cell,
+.visible-breakdown-table .position-cell,
+.visible-breakdown-table .ctr-cell,
+.visible-breakdown-table .visible-cell {
+    font-family: var(--font-mono);
+    text-align: right;
+}
+
+.visible-breakdown-table .position-cell {
+    font-weight: 600;
+}
+
+.visible-breakdown-table .position-cell.top3 {
+    color: var(--success-dark);
+}
+
+.visible-breakdown-table .position-cell.top10 {
+    color: var(--primary-600);
+}
+
+.visible-breakdown-table .position-cell.low {
+    color: var(--gray-400);
+}
+
+.visible-breakdown-table .position-cell.none {
+    color: var(--danger);
+    font-style: italic;
+}
+
+.visible-breakdown-table .visible-cell {
+    font-weight: 600;
+    color: var(--sov-color);
+}
+
+.visible-breakdown-table .visible-cell.zero {
+    color: var(--gray-400);
+}
+
+.visible-breakdown-table tfoot .total-row td {
+    border-top: 2px solid var(--gray-200);
+    border-bottom: none;
+    background: var(--accent-50);
+    font-weight: 600;
+}
+
+.visible-breakdown-table tfoot .total-row td:last-child {
+    color: var(--sov-color);
+    font-size: 14px;
+}
+
+.ctr-reference {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    padding: 10px 12px;
+    background: var(--gray-50);
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+}
+
+.ctr-title {
+    font-weight: 600;
+    color: var(--gray-600);
+}
+
+.ctr-item {
+    color: var(--gray-500);
+    padding: 2px 6px;
+    background: var(--white);
+    border-radius: 4px;
+    border: 1px solid var(--gray-200);
+}
+
+/* Zero visible volume warning */
+.zero-visible-warning {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: var(--warning-light);
+    border: 1px solid var(--warning);
+    border-radius: var(--radius-md);
+    margin-top: 12px;
+}
+
+.zero-visible-warning svg {
+    color: var(--warning);
+    flex-shrink: 0;
+}
+
+.zero-visible-warning span {
+    font-size: 12px;
+    color: var(--gray-700);
+}
+
 /* ===================================
    LOADING & ERROR STATES
    =================================== */

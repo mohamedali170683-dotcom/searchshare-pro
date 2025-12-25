@@ -333,6 +333,32 @@ async function renderProject(container, projectId) {
 
     renderBrandsTable(metrics);
     renderKeywordsTable(project);
+    renderVisibleVolumeBreakdown(project);
+
+    // Toggle for visible volume breakdown
+    document.getElementById('toggle-visible-breakdown')?.addEventListener('click', () => {
+        const content = document.getElementById('visible-breakdown-content');
+        const btn = document.getElementById('toggle-visible-breakdown');
+        if (content.classList.contains('hidden')) {
+            content.classList.remove('hidden');
+            btn.classList.add('expanded');
+            btn.innerHTML = `
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"/>
+                </svg>
+                Hide keyword-by-keyword breakdown
+            `;
+        } else {
+            content.classList.add('hidden');
+            btn.classList.remove('expanded');
+            btn.innerHTML = `
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"/>
+                </svg>
+                Show keyword-by-keyword breakdown
+            `;
+        }
+    });
 
     // Fetch recommendations from API
     try {
@@ -742,6 +768,100 @@ function renderKeywordsTable(project) {
             </tr>
         `;
     }).join('');
+}
+
+// CTR by position lookup
+const CTR_BY_POSITION = {
+    1: 0.316, 2: 0.158, 3: 0.110, 4: 0.077, 5: 0.053,
+    6: 0.043, 7: 0.035, 8: 0.030, 9: 0.026, 10: 0.023
+};
+
+function getCTR(position) {
+    if (!position || position < 1) return 0;
+    if (position <= 10) return CTR_BY_POSITION[position] || 0.023;
+    if (position <= 20) return 0.01;
+    if (position <= 50) return 0.005;
+    return 0.001;
+}
+
+function renderVisibleVolumeBreakdown(project) {
+    const tbody = document.getElementById('visible-breakdown-body');
+    const totalEl = document.getElementById('visible-breakdown-total');
+    const detailSection = document.getElementById('visible-volume-detail');
+
+    if (!tbody || !totalEl) return;
+
+    const keywords = project.marketKeywords || [];
+    const positions = project.positions || {};
+    const brandName = project.brand?.name;
+
+    if (keywords.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" style="text-align: center; color: var(--gray-400); padding: 20px;">
+                    No market keywords defined. Add keywords to calculate Visible Volume.
+                </td>
+            </tr>
+        `;
+        totalEl.textContent = '0';
+        return;
+    }
+
+    let totalVisibleVolume = 0;
+    let hasAnyPosition = false;
+
+    const rows = keywords.map((kw, idx) => {
+        const pos = positions[idx]?.[brandName];
+        const ctr = getCTR(pos);
+        const visibleVol = Math.round((kw.volume || 0) * ctr);
+        totalVisibleVolume += visibleVol;
+
+        if (pos) hasAnyPosition = true;
+
+        // Position class for styling
+        let posClass = 'none';
+        let posDisplay = 'No rank';
+        if (pos) {
+            posDisplay = `#${pos}`;
+            if (pos <= 3) posClass = 'top3';
+            else if (pos <= 10) posClass = 'top10';
+            else posClass = 'low';
+        }
+
+        return `
+            <tr>
+                <td class="kw-name" title="${escapeHtml(kw.keyword)}">${escapeHtml(kw.keyword)}</td>
+                <td class="volume-cell">${formatNumber(kw.volume)}</td>
+                <td class="position-cell ${posClass}">${posDisplay}</td>
+                <td class="ctr-cell">${(ctr * 100).toFixed(1)}%</td>
+                <td class="visible-cell ${visibleVol === 0 ? 'zero' : ''}">${formatNumber(visibleVol)}</td>
+            </tr>
+        `;
+    });
+
+    tbody.innerHTML = rows.join('');
+    totalEl.textContent = formatNumber(totalVisibleVolume);
+
+    // Show warning if visible volume is 0
+    if (totalVisibleVolume === 0 && detailSection) {
+        const existingWarning = detailSection.querySelector('.zero-visible-warning');
+        if (!existingWarning) {
+            const warning = document.createElement('div');
+            warning.className = 'zero-visible-warning';
+            warning.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <span>
+                    <strong>Visible Volume is 0</strong> because no SERP positions are entered for your brand.
+                    Edit the project and add positions in the "SERP Positions" section, or use "Fetch Positions" to get live data.
+                </span>
+            `;
+            detailSection.appendChild(warning);
+        }
+    }
 }
 
 function renderRecommendations(recommendations) {
