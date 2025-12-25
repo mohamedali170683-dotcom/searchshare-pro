@@ -46,6 +46,13 @@ export default async function handler(req, res) {
           }])
         });
 
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.warn(`DataForSEO API error for "${keyword}":`, response.status, errorText.substring(0, 200));
+          positions[i] = {};
+          continue;
+        }
+
         const data = await response.json();
         const items = data.tasks?.[0]?.result?.[0]?.items || [];
         const searchInfo = data.tasks?.[0]?.result?.[0]?.search_information || {};

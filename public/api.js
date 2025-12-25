@@ -60,7 +60,20 @@ async function request(endpoint, options = {}) {
     throw new Error('Session expired. Please log in again.');
   }
 
-  const data = await response.json();
+  // Try to parse response as JSON
+  let data;
+  const contentType = response.headers.get('content-type');
+
+  if (contentType && contentType.includes('application/json')) {
+    data = await response.json();
+  } else {
+    // Response is not JSON - likely an error page
+    const text = await response.text();
+    if (!response.ok) {
+      throw new Error(text.substring(0, 100) || `Request failed: ${response.status}`);
+    }
+    throw new Error('Unexpected response format from server');
+  }
 
   if (!response.ok) {
     throw new Error(data.error || `Request failed: ${response.status}`);
