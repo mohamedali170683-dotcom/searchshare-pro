@@ -242,6 +242,14 @@ export const dataForSeo = {
       body: JSON.stringify({ keywords, domains, locationCode })
     });
     return data;
+  },
+
+  async expandCategory(seedKeywords, limitPerSeed = 50, locationCode = 2840) {
+    const data = await request('/dataforseo/expand-category', {
+      method: 'POST',
+      body: JSON.stringify({ seedKeywords, limitPerSeed, locationCode })
+    });
+    return data;
   }
 };
 

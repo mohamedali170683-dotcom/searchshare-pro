@@ -12,6 +12,7 @@ let currentView = 'dashboard';
 let currentProjectId = null;
 let currentUser = null;
 let charts = {};
+let expandedCategoryData = null; // Stores expanded keywords for Total Market Volume
 
 // =============================================
 // INITIALIZATION
@@ -422,6 +423,36 @@ function renderMetrics(metrics, project) {
         <strong>${sov.toFixed(1)}%</strong>
     `;
 
+    // Show expanded keywords breakdown if available
+    const marketBreakdown = document.getElementById('market-breakdown');
+    const expandedNote = document.getElementById('expanded-keywords-note');
+    const expandedInfo = document.getElementById('expanded-keywords-info');
+
+    if (metrics.hasExpandedData && marketBreakdown) {
+        const seedVolume = metrics.seedKeywordVolume || 0;
+        const expandedCount = metrics.expandedKeywordCount || 0;
+        const seedCount = metrics.seedKeywordCount || 0;
+
+        marketBreakdown.innerHTML = `
+            <div class="market-breakdown-label">Market Volume Breakdown:</div>
+            <div class="market-breakdown-stats">
+                <span>Seed Keywords: <strong>${formatNumber(seedVolume)}</strong> (${seedCount} keywords)</span>
+                <span>|</span>
+                <span>Expanded: <strong>${formatNumber(totalMarketVolume)}</strong> (${expandedCount} total)</span>
+            </div>
+        `;
+
+        if (expandedNote && expandedInfo) {
+            expandedNote.classList.remove('hidden');
+            expandedInfo.textContent = `Total Market Volume includes ${expandedCount} keywords discovered from ${seedCount} seed keywords`;
+        }
+    } else if (marketBreakdown) {
+        marketBreakdown.innerHTML = '';
+        if (expandedNote) {
+            expandedNote.classList.add('hidden');
+        }
+    }
+
     // Gap Calculation Breakdown
     document.getElementById('gap-sov').textContent = sov.toFixed(1) + '%';
     document.getElementById('gap-sos').textContent = sos.toFixed(1) + '%';
@@ -741,6 +772,9 @@ function openProjectModal(existingProject = null) {
     document.getElementById('modal-title').textContent = existingProject ? 'Edit Project' : 'New Project';
     document.getElementById('submit-text').textContent = existingProject ? 'Save Changes' : 'Create Project';
 
+    // Reset expanded category data
+    expandedCategoryData = null;
+
     // Show API status
     updateModalApiStatus();
 
@@ -753,6 +787,18 @@ function openProjectModal(existingProject = null) {
 
         (existingProject.competitors || []).forEach(c => addCompetitorRow(c.name, c.domain, c.volume));
         (existingProject.marketKeywords || []).forEach(k => addKeywordRow(k.keyword, k.volume));
+
+        // Restore expanded keywords data if available
+        if (existingProject.expandedKeywords && existingProject.expandedTotalMarketVolume) {
+            expandedCategoryData = {
+                expandedKeywords: existingProject.expandedKeywords,
+                totalMarketVolume: existingProject.expandedTotalMarketVolume,
+                stats: existingProject.expansionStats,
+                success: true
+            };
+            // Show the expanded summary
+            restoreExpandedSummary(expandedCategoryData);
+        }
     } else {
         addCompetitorRow();
         addCompetitorRow();
@@ -769,6 +815,8 @@ function openProjectModal(existingProject = null) {
     document.getElementById('fetch-all-volumes-btn')?.addEventListener('click', fetchAllVolumes);
     document.getElementById('suggest-keywords-btn')?.addEventListener('click', fetchKeywordSuggestions);
     document.getElementById('fetch-positions-btn')?.addEventListener('click', fetchSerpPositions);
+    document.getElementById('expand-category-btn')?.addEventListener('click', expandCategoryKeywords);
+    document.getElementById('toggle-expanded-keywords')?.addEventListener('click', toggleExpandedKeywordsList);
 
     // Settings link
     document.getElementById('open-settings-link')?.addEventListener('click', (e) => {
@@ -1221,6 +1269,151 @@ function showFetchStatus(element, type, message) {
     }
 }
 
+// =============================================
+// CATEGORY EXPANSION
+// =============================================
+
+async function expandCategoryKeywords() {
+    const keywords = getFormKeywords();
+    const statusEl = document.getElementById('expansion-fetch-status');
+    const summaryEl = document.getElementById('expanded-summary');
+    const expandBtn = document.getElementById('expand-category-btn');
+
+    if (keywords.length === 0) {
+        showFetchStatus(statusEl, 'error', 'Please add at least one seed keyword first');
+        return;
+    }
+
+    if (!currentUser?.hasApiCredentials) {
+        showFetchStatus(statusEl, 'error', 'API not configured. Go to Settings to add credentials.');
+        return;
+    }
+
+    // Disable button while loading
+    expandBtn.disabled = true;
+    showFetchStatus(statusEl, 'loading', `Expanding ${keywords.length} seed keywords to discover full category...`);
+
+    try {
+        const result = await dataForSeo.expandCategory(keywords, 50);
+
+        if (!result.success) {
+            throw new Error(result.error || 'Failed to expand category');
+        }
+
+        // Store the expanded data
+        expandedCategoryData = result;
+
+        // Update the UI
+        document.getElementById('seed-count').textContent = result.stats.seedCount;
+        document.getElementById('expanded-count').textContent = result.stats.totalKeywords;
+        document.getElementById('total-market-volume').textContent = formatNumber(result.totalMarketVolume);
+
+        // Render preview of top keywords
+        const previewEl = document.getElementById('expanded-keywords-preview');
+        const topKeywords = result.expandedKeywords.slice(0, 10);
+        previewEl.innerHTML = topKeywords.map(kw => `
+            <span class="expanded-keyword-tag ${kw.isSeed ? 'seed' : ''}">
+                ${escapeHtml(kw.keyword)}
+                <span class="kw-volume">${formatNumber(kw.volume)}</span>
+            </span>
+        `).join('') + (result.expandedKeywords.length > 10 ? `
+            <span class="expanded-keyword-tag">+${result.expandedKeywords.length - 10} more</span>
+        ` : '');
+
+        // Render full table
+        const fullEl = document.getElementById('expanded-keywords-full');
+        fullEl.innerHTML = `
+            <table class="expanded-keywords-table">
+                <thead>
+                    <tr>
+                        <th>Keyword</th>
+                        <th>Volume</th>
+                        <th>Type</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${result.expandedKeywords.map(kw => `
+                        <tr>
+                            <td class="kw-keyword">${escapeHtml(kw.keyword)}</td>
+                            <td class="kw-volume">${formatNumber(kw.volume)}</td>
+                            <td class="kw-source">${kw.isSeed ? 'Seed' : (kw.source || 'Expanded')}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+
+        summaryEl.classList.remove('hidden');
+        showFetchStatus(statusEl, 'success', `Found ${result.stats.totalKeywords} keywords with total volume of ${formatNumber(result.totalMarketVolume)}`);
+
+    } catch (error) {
+        showFetchStatus(statusEl, 'error', error.message);
+        expandedCategoryData = null;
+    } finally {
+        expandBtn.disabled = false;
+    }
+}
+
+function toggleExpandedKeywordsList() {
+    const fullEl = document.getElementById('expanded-keywords-full');
+    const toggleBtn = document.getElementById('toggle-expanded-keywords');
+
+    if (fullEl.classList.contains('hidden')) {
+        fullEl.classList.remove('hidden');
+        toggleBtn.textContent = 'Hide all keywords';
+    } else {
+        fullEl.classList.add('hidden');
+        toggleBtn.textContent = 'Show all keywords';
+    }
+}
+
+function restoreExpandedSummary(result) {
+    const summaryEl = document.getElementById('expanded-summary');
+    if (!summaryEl || !result) return;
+
+    // Update stats
+    document.getElementById('seed-count').textContent = result.stats?.seedCount || 0;
+    document.getElementById('expanded-count').textContent = result.stats?.totalKeywords || result.expandedKeywords?.length || 0;
+    document.getElementById('total-market-volume').textContent = formatNumber(result.totalMarketVolume);
+
+    // Render preview of top keywords
+    const previewEl = document.getElementById('expanded-keywords-preview');
+    const topKeywords = (result.expandedKeywords || []).slice(0, 10);
+    previewEl.innerHTML = topKeywords.map(kw => `
+        <span class="expanded-keyword-tag ${kw.isSeed ? 'seed' : ''}">
+            ${escapeHtml(kw.keyword)}
+            <span class="kw-volume">${formatNumber(kw.volume)}</span>
+        </span>
+    `).join('') + ((result.expandedKeywords?.length || 0) > 10 ? `
+        <span class="expanded-keyword-tag">+${result.expandedKeywords.length - 10} more</span>
+    ` : '');
+
+    // Render full table
+    const fullEl = document.getElementById('expanded-keywords-full');
+    fullEl.innerHTML = `
+        <table class="expanded-keywords-table">
+            <thead>
+                <tr>
+                    <th>Keyword</th>
+                    <th>Volume</th>
+                    <th>Type</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${(result.expandedKeywords || []).map(kw => `
+                    <tr>
+                        <td class="kw-keyword">${escapeHtml(kw.keyword)}</td>
+                        <td class="kw-volume">${formatNumber(kw.volume)}</td>
+                        <td class="kw-source">${kw.isSeed ? 'Seed' : (kw.source || 'Expanded')}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+
+    summaryEl.classList.remove('hidden');
+}
+
 function closeModal() {
     const modal = document.getElementById('modal-overlay');
     if (modal) modal.remove();
@@ -1372,7 +1565,11 @@ async function saveProject(existingId = null) {
         },
         competitors: getFormCompetitors(),
         marketKeywords: getFormKeywords(),
-        positions: getFormPositions()
+        positions: getFormPositions(),
+        // Include expanded category data if available
+        expandedKeywords: expandedCategoryData?.expandedKeywords || null,
+        expandedTotalMarketVolume: expandedCategoryData?.totalMarketVolume || null,
+        expansionStats: expandedCategoryData?.stats || null
     };
 
     if (!projectData.name || !projectData.brand.name || projectData.brand.volume <= 0) {

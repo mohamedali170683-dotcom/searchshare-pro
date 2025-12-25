@@ -294,6 +294,9 @@
                                 <span class="calc-item-label">Total Market Volume:</span>
                                 <span class="calc-item-value" id="sov-market-volume">--</span>
                             </div>
+                            <div class="calc-row market-breakdown" id="market-breakdown">
+                                <!-- Shows seed vs expanded keywords breakdown -->
+                            </div>
                             <div class="calc-row calc-result">
                                 <span class="calc-item-label">Calculation:</span>
                                 <span class="calc-item-value" id="sov-math">--</span>
@@ -301,6 +304,9 @@
                         </div>
                         <div class="calc-note">
                             <small>Visible Volume = Σ(Keyword Volume × CTR at your SERP position)</small>
+                        </div>
+                        <div class="calc-note expanded-note hidden" id="expanded-keywords-note">
+                            <small id="expanded-keywords-info">Market includes X keywords expanded from Y seed keywords</small>
                         </div>
                     </div>
                     <div class="metric-footer">
@@ -586,10 +592,10 @@
                             <div class="fetch-status" id="competitors-fetch-status"></div>
                         </div>
 
-                        <!-- Step 3: Market Keywords -->
+                        <!-- Step 3: Market Keywords (Seed Keywords) -->
                         <div class="form-section">
                             <div class="section-header">
-                                <h3>Market Keywords <span class="optional">(for SOV)</span></h3>
+                                <h3>Seed Keywords <span class="optional">(Category Indicators)</span></h3>
                                 <div class="section-actions">
                                     <button type="button" class="btn-suggest" id="suggest-keywords-btn">
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
@@ -609,6 +615,10 @@
                                     </button>
                                 </div>
                             </div>
+
+                            <p class="section-hint">
+                                Enter seed keywords that represent your market category. These will be expanded to discover ALL related keywords for Total Market Volume calculation.
+                            </p>
 
                             <!-- Category seed for keyword suggestions -->
                             <div class="category-seed-row">
@@ -632,6 +642,54 @@
                                 <!-- Keyword rows -->
                             </div>
                             <div class="fetch-status" id="keywords-fetch-status"></div>
+
+                            <!-- Category Expansion Section -->
+                            <div class="category-expansion-section" id="category-expansion-section">
+                                <div class="expansion-header">
+                                    <h4>Expand to Full Category</h4>
+                                    <button type="button" class="btn-expand-category" id="expand-category-btn">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <circle cx="12" cy="12" r="10" />
+                                            <line x1="12" y1="8" x2="12" y2="16" />
+                                            <line x1="8" y1="12" x2="16" y2="12" />
+                                        </svg>
+                                        Discover All Category Keywords
+                                    </button>
+                                </div>
+                                <p class="expansion-desc">
+                                    This will use your seed keywords to discover all related keywords in the category and calculate the true Total Market Volume.
+                                </p>
+                                <div class="fetch-status" id="expansion-fetch-status"></div>
+
+                                <!-- Expanded Keywords Summary (shown after expansion) -->
+                                <div class="expanded-summary hidden" id="expanded-summary">
+                                    <div class="expansion-stats">
+                                        <div class="expansion-stat">
+                                            <span class="stat-number" id="seed-count">0</span>
+                                            <span class="stat-label">Seed Keywords</span>
+                                        </div>
+                                        <div class="expansion-arrow">→</div>
+                                        <div class="expansion-stat">
+                                            <span class="stat-number" id="expanded-count">0</span>
+                                            <span class="stat-label">Total Keywords Found</span>
+                                        </div>
+                                        <div class="expansion-stat highlight">
+                                            <span class="stat-number" id="total-market-volume">0</span>
+                                            <span class="stat-label">Total Market Volume</span>
+                                        </div>
+                                    </div>
+                                    <div class="expanded-keywords-preview" id="expanded-keywords-preview">
+                                        <!-- Top keywords preview -->
+                                    </div>
+                                    <button type="button" class="btn-toggle-keywords" id="toggle-expanded-keywords">
+                                        Show all keywords
+                                    </button>
+                                    <div class="expanded-keywords-full hidden" id="expanded-keywords-full">
+                                        <!-- Full list of expanded keywords -->
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Step 4: SERP Positions -->
