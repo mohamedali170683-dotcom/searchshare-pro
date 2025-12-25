@@ -240,11 +240,28 @@
                         <span class="metric-label">Share of Search</span>
                         <span class="metric-badge sos">SOS</span>
                     </div>
-                    <div class="metric-gauge">
-                        <canvas id="sos-gauge"></canvas>
-                        <div class="gauge-value">
-                            <span class="gauge-number" id="sos-value">--</span>
-                            <span class="gauge-unit">%</span>
+                    <div class="metric-main-value">
+                        <span class="metric-big-number" id="sos-value">--</span>
+                        <span class="metric-big-unit">%</span>
+                    </div>
+                    <div class="metric-calculation" id="sos-calculation">
+                        <div class="calc-formula">
+                            <span class="calc-label">Formula:</span>
+                            <code>Brand Volume ÷ Total Brand Volumes</code>
+                        </div>
+                        <div class="calc-breakdown">
+                            <div class="calc-row">
+                                <span class="calc-item-label">Your Brand Volume:</span>
+                                <span class="calc-item-value" id="sos-brand-volume">--</span>
+                            </div>
+                            <div class="calc-row">
+                                <span class="calc-item-label">Total (All Brands):</span>
+                                <span class="calc-item-value" id="sos-total-volume">--</span>
+                            </div>
+                            <div class="calc-row calc-result">
+                                <span class="calc-item-label">Calculation:</span>
+                                <span class="calc-item-value" id="sos-math">--</span>
+                            </div>
                         </div>
                     </div>
                     <div class="metric-footer">
@@ -259,11 +276,31 @@
                         <span class="metric-label">Share of Voice</span>
                         <span class="metric-badge sov">SOV</span>
                     </div>
-                    <div class="metric-gauge">
-                        <canvas id="sov-gauge"></canvas>
-                        <div class="gauge-value">
-                            <span class="gauge-number" id="sov-value">--</span>
-                            <span class="gauge-unit">%</span>
+                    <div class="metric-main-value">
+                        <span class="metric-big-number" id="sov-value">--</span>
+                        <span class="metric-big-unit">%</span>
+                    </div>
+                    <div class="metric-calculation" id="sov-calculation">
+                        <div class="calc-formula">
+                            <span class="calc-label">Formula:</span>
+                            <code>Visible Volume ÷ Total Market Volume</code>
+                        </div>
+                        <div class="calc-breakdown">
+                            <div class="calc-row">
+                                <span class="calc-item-label">Your Visible Volume:</span>
+                                <span class="calc-item-value" id="sov-visible-volume">--</span>
+                            </div>
+                            <div class="calc-row">
+                                <span class="calc-item-label">Total Market Volume:</span>
+                                <span class="calc-item-value" id="sov-market-volume">--</span>
+                            </div>
+                            <div class="calc-row calc-result">
+                                <span class="calc-item-label">Calculation:</span>
+                                <span class="calc-item-value" id="sov-math">--</span>
+                            </div>
+                        </div>
+                        <div class="calc-note">
+                            <small>Visible Volume = Σ(Keyword Volume × CTR at your SERP position)</small>
                         </div>
                     </div>
                     <div class="metric-footer">
@@ -275,25 +312,42 @@
                 <!-- Growth Gap Card -->
                 <div class="metric-card gap-metric" id="gap-card">
                     <div class="metric-header">
-                        <span class="metric-label">Growth Gap</span>
-                        <span class="metric-badge gap">SOV - SOS</span>
+                        <span class="metric-label">Growth Gap (ESOV)</span>
+                        <span class="metric-badge gap">SOV − SOS</span>
                     </div>
-                    <div class="gap-display">
+                    <div class="metric-main-value">
+                        <span class="metric-big-number" id="gap-value">--</span>
+                        <span class="metric-big-unit">pp</span>
+                    </div>
+                    <div class="metric-calculation" id="gap-calculation">
+                        <div class="calc-formula">
+                            <span class="calc-label">Formula:</span>
+                            <code>SOV − SOS = Growth Gap</code>
+                        </div>
+                        <div class="calc-breakdown">
+                            <div class="calc-row">
+                                <span class="calc-item-label">Your SOV:</span>
+                                <span class="calc-item-value" id="gap-sov">--</span>
+                            </div>
+                            <div class="calc-row">
+                                <span class="calc-item-label">Your SOS:</span>
+                                <span class="calc-item-value" id="gap-sos">--</span>
+                            </div>
+                            <div class="calc-row calc-result">
+                                <span class="calc-item-label">Gap:</span>
+                                <span class="calc-item-value" id="gap-math">--</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="gap-status-box" id="gap-status-box">
                         <div class="gap-indicator" id="gap-indicator">
-                            <svg class="gap-icon" width="32" height="32" viewBox="0 0 24 24" fill="none"
+                            <svg class="gap-icon" width="24" height="24" viewBox="0 0 24 24" fill="none"
                                 stroke="currentColor" stroke-width="2">
                                 <polyline points="23,6 13.5,15.5 8.5,10.5 1,18" />
                                 <polyline points="17,6 23,6 23,12" />
                             </svg>
                         </div>
-                        <div class="gap-value">
-                            <span class="gap-number" id="gap-value">--</span>
-                            <span class="gap-unit">pp</span>
-                        </div>
-                        <div class="gap-status" id="gap-status">Calculating...</div>
-                    </div>
-                    <div class="gap-insight" id="gap-insight">
-                        <p>The growth gap indicates market share trajectory based on Binet's ESOV research.</p>
+                        <span class="gap-status" id="gap-status">Calculating...</span>
                     </div>
                 </div>
             </div>
