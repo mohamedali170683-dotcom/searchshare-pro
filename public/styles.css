@@ -662,8 +662,9 @@ body {
     background: var(--white);
     border: 1px solid var(--gray-200);
     border-radius: var(--radius-lg);
-    padding: 28px;
-    text-align: center;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
 }
 
 .metric-card.sos-metric {
@@ -672,6 +673,10 @@ body {
 
 .metric-card.sov-metric {
     border-top: 3px solid var(--sov-color);
+}
+
+.metric-card.gap-metric {
+    border-top: 3px solid var(--gray-400);
 }
 
 .metric-card.gap-metric.growing {
@@ -683,14 +688,16 @@ body {
 }
 
 .metric-header {
-    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
 }
 
 .metric-label {
     font-size: 13px;
     font-weight: 500;
     color: var(--gray-500);
-    margin-bottom: 6px;
 }
 
 .metric-badge {
@@ -718,33 +725,185 @@ body {
     color: var(--gray-600);
 }
 
-.metric-gauge {
-    position: relative;
-    width: 120px;
-    height: 120px;
-    margin: 0 auto 16px;
-}
-
-.gauge-value {
-    position: absolute;
-    inset: 0;
+/* Main metric value display */
+.metric-main-value {
     display: flex;
-    flex-direction: column;
-    align-items: center;
+    align-items: baseline;
     justify-content: center;
+    gap: 4px;
+    margin: 16px 0;
 }
 
-.gauge-number {
-    font-size: 36px;
+.metric-big-number {
+    font-size: 48px;
     font-weight: 700;
+    line-height: 1;
+    letter-spacing: -2px;
     color: var(--gray-900);
-    letter-spacing: -1px;
 }
 
-.gauge-unit {
-    font-size: 16px;
+.sos-metric .metric-big-number {
+    color: var(--sos-color);
+}
+
+.sov-metric .metric-big-number {
+    color: var(--sov-color);
+}
+
+.metric-big-unit {
+    font-size: 20px;
     font-weight: 500;
     color: var(--gray-400);
+}
+
+/* Calculation breakdown */
+.metric-calculation {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-100);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    margin: 16px 0;
+    text-align: left;
+    flex: 1;
+}
+
+.calc-formula {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.calc-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--gray-500);
+    flex-shrink: 0;
+}
+
+.calc-formula code {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--gray-700);
+    background: var(--white);
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--gray-200);
+}
+
+.calc-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.calc-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+}
+
+.calc-item-label {
+    color: var(--gray-500);
+}
+
+.calc-item-value {
+    font-weight: 600;
+    color: var(--gray-800);
+    font-family: var(--font-mono);
+    font-size: 12px;
+}
+
+.calc-row.calc-result {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--gray-200);
+}
+
+.calc-row.calc-result .calc-item-value {
+    color: var(--gray-900);
+}
+
+.calc-highlight {
+    background: var(--primary-50);
+    color: var(--primary-700);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.calc-note {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--gray-200);
+}
+
+.calc-note small {
+    font-size: 11px;
+    color: var(--gray-500);
+    font-style: italic;
+}
+
+/* Gap status box */
+.gap-status-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: var(--radius-md);
+    background: var(--gray-100);
+    margin-top: auto;
+}
+
+.gap-status-box.growing {
+    background: var(--success-light);
+}
+
+.gap-status-box.growing .gap-status {
+    color: var(--success-dark);
+}
+
+.gap-status-box.growing .gap-indicator {
+    color: var(--success);
+}
+
+.gap-status-box.declining {
+    background: var(--danger-light);
+}
+
+.gap-status-box.declining .gap-status {
+    color: var(--danger-dark);
+}
+
+.gap-status-box.declining .gap-indicator {
+    color: var(--danger);
+}
+
+.gap-status {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gray-600);
+}
+
+.gap-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gray-400);
+}
+
+.gap-indicator.positive {
+    color: var(--success);
+}
+
+.gap-indicator.negative {
+    color: var(--danger);
 }
 
 .metric-footer {
@@ -767,71 +926,6 @@ body {
     color: var(--gray-400);
 }
 
-/* Gap Display */
-.gap-display {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 16px;
-}
-
-.gap-indicator {
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 16px;
-}
-
-.gap-indicator.positive {
-    background: var(--success-light);
-    color: var(--success);
-}
-
-.gap-indicator.negative {
-    background: var(--danger-light);
-    color: var(--danger);
-}
-
-.gap-value {
-    display: flex;
-    align-items: baseline;
-    gap: 4px;
-}
-
-.gap-number {
-    font-size: 36px;
-    font-weight: 700;
-    color: var(--gray-900);
-    letter-spacing: -1px;
-}
-
-.gap-unit {
-    font-size: 16px;
-    font-weight: 500;
-    color: var(--gray-400);
-}
-
-.gap-status {
-    font-size: 14px;
-    font-weight: 600;
-    margin-top: 8px;
-}
-
-.gap-status.growing { color: var(--success); }
-.gap-status.declining { color: var(--danger); }
-
-.gap-insight {
-    margin-top: 16px;
-    padding: 16px;
-    background: var(--gray-50);
-    border-radius: var(--radius-md);
-    font-size: 13px;
-    color: var(--gray-600);
-    line-height: 1.5;
-}
 
 /* ===================================
    CHARTS

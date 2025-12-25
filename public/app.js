@@ -391,43 +391,79 @@ async function renderProject(container, projectId) {
 }
 
 function renderMetrics(metrics, project) {
-    document.getElementById('sos-value').textContent = (metrics.sos || 0).toFixed(1);
-    document.getElementById('sov-value').textContent = (metrics.sov || 0).toFixed(1);
-
+    const sos = metrics.sos || 0;
+    const sov = metrics.sov || 0;
     const gap = metrics.gap || 0;
+
+    // Main values
+    document.getElementById('sos-value').textContent = sos.toFixed(1);
+    document.getElementById('sov-value').textContent = sov.toFixed(1);
+    document.getElementById('gap-value').textContent = (gap >= 0 ? '+' : '') + gap.toFixed(1);
+
+    // SOS Calculation Breakdown
+    const brandVolume = metrics.brandVolume || project.brand?.volume || 0;
+    const totalBrandVolume = metrics.totalBrandVolume || 0;
+    document.getElementById('sos-brand-volume').textContent = formatNumber(brandVolume);
+    document.getElementById('sos-total-volume').textContent = formatNumber(totalBrandVolume);
+    document.getElementById('sos-math').innerHTML = `
+        <span class="calc-highlight">${formatNumber(brandVolume)}</span> ÷
+        <span class="calc-highlight">${formatNumber(totalBrandVolume)}</span> =
+        <strong>${sos.toFixed(1)}%</strong>
+    `;
+
+    // SOV Calculation Breakdown
+    const visibleVolume = metrics.visibleVolume || 0;
+    const totalMarketVolume = metrics.totalMarketVolume || 0;
+    document.getElementById('sov-visible-volume').textContent = formatNumber(visibleVolume);
+    document.getElementById('sov-market-volume').textContent = formatNumber(totalMarketVolume);
+    document.getElementById('sov-math').innerHTML = `
+        <span class="calc-highlight">${formatNumber(visibleVolume)}</span> ÷
+        <span class="calc-highlight">${formatNumber(totalMarketVolume)}</span> =
+        <strong>${sov.toFixed(1)}%</strong>
+    `;
+
+    // Gap Calculation Breakdown
+    document.getElementById('gap-sov').textContent = sov.toFixed(1) + '%';
+    document.getElementById('gap-sos').textContent = sos.toFixed(1) + '%';
+    document.getElementById('gap-math').innerHTML = `
+        <span class="calc-highlight">${sov.toFixed(1)}%</span> −
+        <span class="calc-highlight">${sos.toFixed(1)}%</span> =
+        <strong>${(gap >= 0 ? '+' : '')}${gap.toFixed(1)}pp</strong>
+    `;
+
+    // Gap Status
     const gapCard = document.getElementById('gap-card');
     const gapIndicator = document.getElementById('gap-indicator');
-    const gapValue = document.getElementById('gap-value');
+    const gapStatusBox = document.getElementById('gap-status-box');
     const gapStatus = document.getElementById('gap-status');
-    const gapInsight = document.getElementById('gap-insight');
-
-    gapValue.textContent = (gap >= 0 ? '+' : '') + gap.toFixed(1);
 
     if (gap > 0) {
         gapCard.classList.remove('declining');
         gapCard.classList.add('growing');
-        gapIndicator.classList.remove('declining');
-        gapStatus.textContent = 'Growing Position';
-        gapStatus.style.color = 'var(--growing)';
-        gapInsight.querySelector('p').textContent = 'SOV exceeds SOS - this predicts future market share growth (Binet & Field).';
+        gapIndicator.classList.remove('negative');
+        gapIndicator.classList.add('positive');
+        gapStatusBox.classList.remove('declining');
+        gapStatusBox.classList.add('growing');
+        gapStatus.textContent = 'Growing - SOV > SOS predicts market share growth';
     } else if (gap < -5) {
         gapCard.classList.remove('growing');
         gapCard.classList.add('declining');
-        gapIndicator.classList.add('declining');
-        gapStatus.textContent = 'At Risk';
-        gapStatus.style.color = 'var(--declining)';
-        gapInsight.querySelector('p').textContent = 'SOS exceeds SOV - risk of losing market share without SEO investment.';
+        gapIndicator.classList.remove('positive');
+        gapIndicator.classList.add('negative');
+        gapStatusBox.classList.remove('growing');
+        gapStatusBox.classList.add('declining');
+        gapStatus.textContent = 'At Risk - SOS > SOV indicates visibility gap';
     } else {
         gapCard.classList.remove('growing', 'declining');
-        gapIndicator.classList.remove('declining');
-        gapStatus.textContent = 'Stable';
-        gapStatus.style.color = 'var(--text-secondary)';
-        gapInsight.querySelector('p').textContent = 'SOS and SOV are balanced. Push SOV higher to drive growth.';
+        gapIndicator.classList.remove('positive', 'negative');
+        gapStatusBox.classList.remove('growing', 'declining');
+        gapStatus.textContent = 'Stable - Push SOV higher to drive growth';
     }
 
+    // Change vs last month
     const snapshots = project.snapshots || [];
     if (snapshots.length >= 2) {
-        const prev = snapshots[1]; // Second most recent (since array is desc by timestamp)
+        const prev = snapshots[1];
         const curr = snapshots[0];
         const sosChange = curr.sos - prev.sos;
         const sovChange = curr.sov - prev.sov;
@@ -438,48 +474,21 @@ function renderMetrics(metrics, project) {
         document.getElementById('sov-change').textContent = (sovChange >= 0 ? '+' : '') + sovChange.toFixed(1) + 'pp';
         document.getElementById('sov-change').className = `metric-change ${sovChange >= 0 ? 'positive' : 'negative'}`;
     } else {
-        document.getElementById('sos-change').textContent = '--';
-        document.getElementById('sov-change').textContent = '--';
+        document.getElementById('sos-change').textContent = 'No prior data';
+        document.getElementById('sov-change').textContent = 'No prior data';
     }
-
-    renderGauge('sos-gauge', metrics.sos || 0, '#6366f1');
-    renderGauge('sov-gauge', metrics.sov || 0, '#f59e0b');
 }
 
-function renderGauge(canvasId, value, color) {
-    const canvas = document.getElementById(canvasId);
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    const dpr = window.devicePixelRatio || 1;
-
-    canvas.width = 200 * dpr;
-    canvas.height = 120 * dpr;
-    canvas.style.width = '200px';
-    canvas.style.height = '120px';
-    ctx.scale(dpr, dpr);
-
-    const centerX = 100;
-    const centerY = 100;
-    const radius = 80;
-    const startAngle = Math.PI;
-    const endAngle = 2 * Math.PI;
-
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, radius, startAngle, endAngle);
-    ctx.lineWidth = 12;
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-    ctx.lineCap = 'round';
-    ctx.stroke();
-
-    const valueAngle = startAngle + (endAngle - startAngle) * (Math.min(value, 100) / 100);
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, radius, startAngle, valueAngle);
-    ctx.lineWidth = 12;
-    ctx.strokeStyle = color;
-    ctx.lineCap = 'round';
-    ctx.stroke();
-}
+// Chart colors for light theme
+const CHART_COLORS = {
+    sos: '#0d9488',      // Teal
+    sov: '#f97316',      // Orange
+    brand: '#0d9488',
+    competitor: '#d6d3d1',
+    grid: 'rgba(0, 0, 0, 0.06)',
+    text: '#57534e',
+    textMuted: '#a8a29e'
+};
 
 function renderCompetitorsChart(metrics) {
     const canvas = document.getElementById('competitors-chart');
@@ -500,7 +509,7 @@ function renderCompetitorsChart(metrics) {
                 label: 'Share of Search (%)',
                 data: sortedBrands.map(b => b.sos.toFixed(1)),
                 backgroundColor: sortedBrands.map(b =>
-                    b.isBrand ? 'rgba(99, 102, 241, 0.8)' : 'rgba(113, 113, 122, 0.5)'
+                    b.isBrand ? CHART_COLORS.brand : CHART_COLORS.competitor
                 ),
                 borderRadius: 4,
                 borderSkipped: false
@@ -513,22 +522,22 @@ function renderCompetitorsChart(metrics) {
             plugins: {
                 legend: { display: false },
                 tooltip: {
-                    backgroundColor: 'rgba(24, 24, 27, 0.95)',
+                    backgroundColor: '#1c1917',
                     titleColor: '#fafafa',
-                    bodyColor: '#a1a1aa',
+                    bodyColor: '#d6d3d1',
                     padding: 12,
                     cornerRadius: 8
                 }
             },
             scales: {
                 x: {
-                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                    ticks: { color: '#71717a' },
+                    grid: { color: CHART_COLORS.grid },
+                    ticks: { color: CHART_COLORS.text },
                     max: 100
                 },
                 y: {
                     grid: { display: false },
-                    ticks: { color: '#a1a1aa' }
+                    ticks: { color: CHART_COLORS.text }
                 }
             }
         }
@@ -550,8 +559,8 @@ function updateCompetitorsChart(metrics, type) {
     charts.competitors.data.datasets[0].label = type === 'sos' ? 'Share of Search (%)' : 'Share of Voice (%)';
     charts.competitors.data.datasets[0].backgroundColor = sortedBrands.map(b =>
         b.isBrand
-            ? (type === 'sos' ? 'rgba(99, 102, 241, 0.8)' : 'rgba(245, 158, 11, 0.8)')
-            : 'rgba(113, 113, 122, 0.5)'
+            ? (type === 'sos' ? CHART_COLORS.sos : CHART_COLORS.sov)
+            : CHART_COLORS.competitor
     );
     charts.competitors.update();
 }
@@ -565,6 +574,17 @@ function renderTrendChart(project) {
     }
 
     const snapshots = [...(project.snapshots || [])].reverse();
+
+    // If no snapshots, show a placeholder message
+    if (snapshots.length === 0) {
+        const ctx = canvas.getContext('2d');
+        ctx.font = '14px -apple-system, BlinkMacSystemFont, sans-serif';
+        ctx.fillStyle = CHART_COLORS.textMuted;
+        ctx.textAlign = 'center';
+        ctx.fillText('Click "Fetch Live Trends" to load historical data', canvas.width / 2, canvas.height / 2);
+        return;
+    }
+
     const labels = snapshots.map(s => s.date);
     const sosData = snapshots.map(s => s.sos.toFixed(1));
     const sovData = snapshots.map(s => s.sov.toFixed(1));
@@ -577,18 +597,26 @@ function renderTrendChart(project) {
                 {
                     label: 'SOS',
                     data: sosData,
-                    borderColor: '#6366f1',
-                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                    borderColor: CHART_COLORS.sos,
+                    backgroundColor: 'rgba(13, 148, 136, 0.1)',
                     fill: true,
-                    tension: 0.4
+                    tension: 0.4,
+                    pointBackgroundColor: CHART_COLORS.sos,
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4
                 },
                 {
                     label: 'SOV',
                     data: sovData,
-                    borderColor: '#f59e0b',
-                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    borderColor: CHART_COLORS.sov,
+                    backgroundColor: 'rgba(249, 115, 22, 0.1)',
                     fill: true,
-                    tension: 0.4
+                    tension: 0.4,
+                    pointBackgroundColor: CHART_COLORS.sov,
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4
                 }
             ]
         },
@@ -600,27 +628,30 @@ function renderTrendChart(project) {
                     position: 'top',
                     align: 'end',
                     labels: {
-                        color: '#a1a1aa',
+                        color: CHART_COLORS.text,
                         usePointStyle: true,
                         pointStyle: 'circle'
                     }
                 },
                 tooltip: {
-                    backgroundColor: 'rgba(24, 24, 27, 0.95)',
+                    backgroundColor: '#1c1917',
                     titleColor: '#fafafa',
-                    bodyColor: '#a1a1aa',
+                    bodyColor: '#d6d3d1',
                     padding: 12,
                     cornerRadius: 8
                 }
             },
             scales: {
                 x: {
-                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                    ticks: { color: '#71717a' }
+                    grid: { color: CHART_COLORS.grid },
+                    ticks: { color: CHART_COLORS.text }
                 },
                 y: {
-                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                    ticks: { color: '#71717a' },
+                    grid: { color: CHART_COLORS.grid },
+                    ticks: {
+                        color: CHART_COLORS.text,
+                        callback: (value) => `${value}%`
+                    },
                     min: 0,
                     max: 100
                 }
@@ -1120,11 +1151,11 @@ async function fetchSOSTrends(project) {
                     datasets: [{
                         label: 'Share of Search (%)',
                         data: sosHistory.map(d => d.sos.toFixed(1)),
-                        borderColor: '#6366f1',
-                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        borderColor: CHART_COLORS.sos,
+                        backgroundColor: 'rgba(13, 148, 136, 0.1)',
                         fill: true,
                         tension: 0.4,
-                        pointBackgroundColor: '#6366f1',
+                        pointBackgroundColor: CHART_COLORS.sos,
                         pointBorderColor: '#fff',
                         pointBorderWidth: 2,
                         pointRadius: 4,
@@ -1139,9 +1170,9 @@ async function fetchSOSTrends(project) {
                             display: false
                         },
                         tooltip: {
-                            backgroundColor: 'rgba(24, 24, 27, 0.95)',
+                            backgroundColor: '#1c1917',
                             titleColor: '#fafafa',
-                            bodyColor: '#a1a1aa',
+                            bodyColor: '#d6d3d1',
                             padding: 12,
                             cornerRadius: 8,
                             callbacks: {
@@ -1151,13 +1182,13 @@ async function fetchSOSTrends(project) {
                     },
                     scales: {
                         x: {
-                            grid: { color: 'rgba(0, 0, 0, 0.05)' },
-                            ticks: { color: '#71717a', maxRotation: 45 }
+                            grid: { color: CHART_COLORS.grid },
+                            ticks: { color: CHART_COLORS.text, maxRotation: 45 }
                         },
                         y: {
-                            grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                            grid: { color: CHART_COLORS.grid },
                             ticks: {
-                                color: '#71717a',
+                                color: CHART_COLORS.text,
                                 callback: (value) => `${value}%`
                             },
                             min: 0,
