@@ -302,6 +302,53 @@
                                 <span class="calc-item-value" id="sov-math">--</span>
                             </div>
                         </div>
+
+                        <!-- Visible Volume Detailed Breakdown -->
+                        <div class="visible-volume-detail" id="visible-volume-detail">
+                            <button type="button" class="btn-toggle-detail" id="toggle-visible-breakdown">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"/>
+                                </svg>
+                                Show keyword-by-keyword breakdown
+                            </button>
+                            <div class="visible-breakdown-content hidden" id="visible-breakdown-content">
+                                <div class="visible-breakdown-header">
+                                    <span>How Visible Volume is calculated:</span>
+                                </div>
+                                <div class="visible-breakdown-table-wrap">
+                                    <table class="visible-breakdown-table" id="visible-breakdown-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Keyword</th>
+                                                <th>Volume</th>
+                                                <th>Position</th>
+                                                <th>CTR</th>
+                                                <th>Visible Vol.</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="visible-breakdown-body">
+                                            <!-- Populated dynamically -->
+                                        </tbody>
+                                        <tfoot>
+                                            <tr class="total-row">
+                                                <td colspan="4"><strong>Total Visible Volume</strong></td>
+                                                <td id="visible-breakdown-total">--</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                                <div class="ctr-reference">
+                                    <span class="ctr-title">CTR by Position:</span>
+                                    <span class="ctr-item">#1: 31.6%</span>
+                                    <span class="ctr-item">#2: 15.8%</span>
+                                    <span class="ctr-item">#3: 11.0%</span>
+                                    <span class="ctr-item">#4: 7.7%</span>
+                                    <span class="ctr-item">#5: 5.3%</span>
+                                    <span class="ctr-item">...</span>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="calc-note">
                             <small>Visible Volume = Σ(Keyword Volume × CTR at your SERP position)</small>
                         </div>
