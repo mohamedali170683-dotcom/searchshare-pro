@@ -21,62 +21,88 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Keywords and domains required' });
     }
 
+    // Limit keywords to prevent timeout (Vercel has 10s limit on Hobby plan)
+    const maxKeywords = 5;
+    const limitedKeywords = keywords.slice(0, maxKeywords);
+    const wasLimited = keywords.length > maxKeywords;
+
     const cleanDomains = domains.map(d =>
       d.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0].toLowerCase()
     );
 
-    const positions = {};
-    const keywordVolumes = {};
+    const authHeader = getAuthHeader(credentials);
 
-    for (let i = 0; i < keywords.length; i++) {
-      const keyword = keywords[i];
-
+    // Fetch all keywords in parallel for speed
+    const fetchPromises = limitedKeywords.map(async (keyword, i) => {
       try {
         const response = await fetch('https://api.dataforseo.com/v3/serp/google/organic/live/regular', {
           method: 'POST',
           headers: {
-            'Authorization': getAuthHeader(credentials),
+            'Authorization': authHeader,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify([{
             keyword,
             location_code: locationCode,
             language_code: 'en',
-            depth: 100
+            depth: 50 // Reduced depth for speed
           }])
         });
 
         if (!response.ok) {
-          const errorText = await response.text();
-          console.warn(`DataForSEO API error for "${keyword}":`, response.status, errorText.substring(0, 200));
-          positions[i] = {};
-          continue;
+          console.warn(`DataForSEO API error for "${keyword}":`, response.status);
+          return { index: i, keyword, positions: {}, volume: 0 };
         }
 
         const data = await response.json();
         const items = data.tasks?.[0]?.result?.[0]?.items || [];
         const searchInfo = data.tasks?.[0]?.result?.[0]?.search_information || {};
 
-        positions[i] = {};
-        keywordVolumes[keyword] = searchInfo.search_volume || 0;
+        const keywordPositions = {};
 
         items.forEach(item => {
           if (item.type === 'organic') {
             const itemDomain = (item.domain || '').toLowerCase();
             cleanDomains.forEach((domain, domainIdx) => {
               if (itemDomain.includes(domain) || domain.includes(itemDomain)) {
-                positions[i][domains[domainIdx]] = item.rank_group;
+                keywordPositions[domains[domainIdx]] = item.rank_group;
               }
             });
           }
         });
+
+        return {
+          index: i,
+          keyword,
+          positions: keywordPositions,
+          volume: searchInfo.search_volume || 0
+        };
       } catch (error) {
         console.warn(`Failed to fetch SERP for "${keyword}":`, error.message);
-        positions[i] = {};
+        return { index: i, keyword, positions: {}, volume: 0 };
       }
-    }
+    });
 
-    res.json({ positions, keywordVolumes });
+    // Wait for all requests to complete
+    const results = await Promise.all(fetchPromises);
+
+    // Build response objects
+    const positions = {};
+    const keywordVolumes = {};
+
+    results.forEach(result => {
+      positions[result.index] = result.positions;
+      keywordVolumes[result.keyword] = result.volume;
+    });
+
+    res.json({
+      positions,
+      keywordVolumes,
+      limited: wasLimited,
+      message: wasLimited
+        ? `Only fetched first ${maxKeywords} keywords to avoid timeout. Process remaining keywords separately.`
+        : undefined
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
