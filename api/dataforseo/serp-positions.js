@@ -60,7 +60,7 @@ export default async function handler(req, res) {
             keyword,
             location_code: locationCode,
             language_code: 'en',
-            depth: 100 // Full depth to find positions beyond top 20
+            depth: 50 // Balanced depth - finds positions up to 50, faster response
           }])
         }, 9000); // 9 second timeout (just under Vercel's 10s limit)
 
