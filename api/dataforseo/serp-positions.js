@@ -62,7 +62,7 @@ export default async function handler(req, res) {
             language_code: 'en',
             depth: 100 // Full depth to find positions beyond top 20
           }])
-        }, 7000); // 7 second timeout per request
+        }, 9000); // 9 second timeout (just under Vercel's 10s limit)
 
         if (!response.ok) {
           const errorText = await response.text().catch(() => 'Unknown error');
