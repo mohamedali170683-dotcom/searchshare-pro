@@ -21,9 +21,9 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Keywords and domains required' });
     }
 
-    // Limit keywords to prevent timeout (Vercel has 10s limit on Hobby plan)
-    // Only 1 keyword at a time to allow deeper search (100 results)
-    const maxKeywords = 1;
+    // Limit keywords to prevent timeout
+    // Vercel Pro has 60s limit, so we can process more keywords
+    const maxKeywords = 5;
     const limitedKeywords = keywords.slice(0, maxKeywords);
     const wasLimited = keywords.length > maxKeywords;
 
@@ -60,9 +60,9 @@ export default async function handler(req, res) {
             keyword,
             location_code: locationCode,
             language_code: 'en',
-            depth: 30 // Reduced depth for Vercel Hobby plan timeout
+            depth: 100 // Full depth - Vercel Pro has 60s timeout
           }])
-        }, 6000); // 6 second timeout to leave room for cold start + auth
+        }, 45000); // 45 second timeout per request (Vercel Pro allows 60s)
 
         if (!response.ok) {
           const errorText = await response.text().catch(() => 'Unknown error');
