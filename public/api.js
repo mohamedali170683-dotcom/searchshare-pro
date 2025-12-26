@@ -257,6 +257,15 @@ export const dataForSeo = {
     return data;
   },
 
+  // Faster alternative: fetch rankings per domain instead of per keyword
+  async fetchRankedKeywords(keywords, domains, locationCode = 2840) {
+    const data = await request('/dataforseo/ranked-keywords', {
+      method: 'POST',
+      body: JSON.stringify({ keywords, domains, locationCode })
+    });
+    return data;
+  },
+
   async expandCategory(seedKeywords, limitPerSeed = 50, locationCode = 2840) {
     const data = await request('/dataforseo/expand-category', {
       method: 'POST',

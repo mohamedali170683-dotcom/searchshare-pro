@@ -1163,25 +1163,30 @@ async function fetchSerpPositions() {
         ...competitors.map(c => c.domain || c.name)
     ].filter(d => d);
 
-    showFetchStatus(statusEl, 'loading', `Fetching SERP positions for ${keywords.length} keywords...`);
+    showFetchStatus(statusEl, 'loading', `Fetching rankings for ${allDomains.length} domains...`);
 
     try {
-        const result = await dataForSeo.fetchSerpPositions(
+        // Use Ranked Keywords API - fetches all rankings per domain (faster, no timeout)
+        const result = await dataForSeo.fetchRankedKeywords(
             keywords.map(k => k.keyword),
             allDomains
         );
 
-        const { positions, limited, message, errors, debug } = result;
+        const { positions, errors, debug } = result;
 
         // Log debug info to console
-        console.log('SERP Positions Debug:', debug);
+        console.log('Ranked Keywords Debug:', debug);
         if (errors?.length) {
-            console.error('SERP Errors:', errors);
+            console.error('API Errors:', errors);
         }
+
+        // Count how many positions were found
+        let positionsFound = 0;
 
         // Update position matrix inputs
         Object.entries(positions).forEach(([kwIdx, brandPositions]) => {
             Object.entries(brandPositions).forEach(([domain, position]) => {
+                positionsFound++;
                 const input = document.querySelector(
                     `#positions-matrix input[data-keyword="${kwIdx}"][data-brand="${domain}"]`
                 );
@@ -1203,12 +1208,12 @@ async function fetchSerpPositions() {
         });
 
         if (errors?.length > 0) {
-            const errorMsg = errors.map(e => `${e.keyword}: ${e.error}`).join('; ');
+            const errorMsg = errors.map(e => `${e.domain}: ${e.error}`).join('; ');
             showFetchStatus(statusEl, 'error', `API errors: ${errorMsg}`);
-        } else if (limited) {
-            showFetchStatus(statusEl, 'warning', message || 'Some keywords were skipped due to timeout limits');
+        } else if (positionsFound === 0) {
+            showFetchStatus(statusEl, 'warning', 'No rankings found for these keywords. Domains may not rank in top 1000.');
         } else {
-            showFetchStatus(statusEl, 'success', 'SERP positions updated');
+            showFetchStatus(statusEl, 'success', `Found ${positionsFound} rankings`);
         }
     } catch (error) {
         showFetchStatus(statusEl, 'error', error.message);
