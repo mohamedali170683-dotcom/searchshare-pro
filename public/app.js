@@ -1171,7 +1171,13 @@ async function fetchSerpPositions() {
             allDomains
         );
 
-        const { positions, limited, message } = result;
+        const { positions, limited, message, errors, debug } = result;
+
+        // Log debug info to console
+        console.log('SERP Positions Debug:', debug);
+        if (errors?.length) {
+            console.error('SERP Errors:', errors);
+        }
 
         // Update position matrix inputs
         Object.entries(positions).forEach(([kwIdx, brandPositions]) => {
@@ -1196,7 +1202,10 @@ async function fetchSerpPositions() {
             });
         });
 
-        if (limited) {
+        if (errors?.length > 0) {
+            const errorMsg = errors.map(e => `${e.keyword}: ${e.error}`).join('; ');
+            showFetchStatus(statusEl, 'error', `API errors: ${errorMsg}`);
+        } else if (limited) {
             showFetchStatus(statusEl, 'warning', message || 'Some keywords were skipped due to timeout limits');
         } else {
             showFetchStatus(statusEl, 'success', 'SERP positions updated');

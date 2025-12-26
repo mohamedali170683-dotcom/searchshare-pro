@@ -65,11 +65,17 @@ export default async function handler(req, res) {
         }, 7000); // 7 second timeout per request
 
         if (!response.ok) {
-          console.warn(`DataForSEO API error for "${keyword}":`, response.status);
-          return { index: i, keyword, positions: {}, volume: 0 };
+          const errorText = await response.text().catch(() => 'Unknown error');
+          return { index: i, keyword, positions: {}, volume: 0, error: `API ${response.status}: ${errorText.substring(0, 100)}` };
         }
 
         const data = await response.json();
+
+        // Check for API-level errors
+        if (data.tasks?.[0]?.status_code !== 20000) {
+          return { index: i, keyword, positions: {}, volume: 0, error: data.tasks?.[0]?.status_message || 'API task error' };
+        }
+
         const items = data.tasks?.[0]?.result?.[0]?.items || [];
         const searchInfo = data.tasks?.[0]?.result?.[0]?.search_information || {};
 
@@ -90,11 +96,11 @@ export default async function handler(req, res) {
           index: i,
           keyword,
           positions: keywordPositions,
-          volume: searchInfo.search_volume || 0
+          volume: searchInfo.search_volume || 0,
+          itemCount: items.length
         };
       } catch (error) {
-        console.warn(`Failed to fetch SERP for "${keyword}":`, error.message);
-        return { index: i, keyword, positions: {}, volume: 0 };
+        return { index: i, keyword, positions: {}, volume: 0, error: error.message || 'Request failed' };
       }
     });
 
@@ -104,10 +110,14 @@ export default async function handler(req, res) {
     // Build response objects
     const positions = {};
     const keywordVolumes = {};
+    const errors = [];
 
     results.forEach(result => {
       positions[result.index] = result.positions;
       keywordVolumes[result.keyword] = result.volume;
+      if (result.error) {
+        errors.push({ keyword: result.keyword, error: result.error });
+      }
     });
 
     res.json({
@@ -116,7 +126,9 @@ export default async function handler(req, res) {
       limited: wasLimited,
       message: wasLimited
         ? `Only fetched first ${maxKeywords} keywords to avoid timeout. Process remaining keywords separately.`
-        : undefined
+        : undefined,
+      errors: errors.length > 0 ? errors : undefined,
+      debug: { keywordsProcessed: limitedKeywords.length, domainsSearched: cleanDomains }
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
