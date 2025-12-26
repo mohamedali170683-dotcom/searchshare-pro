@@ -60,9 +60,9 @@ export default async function handler(req, res) {
             keyword,
             location_code: locationCode,
             language_code: 'en',
-            depth: 50 // Balanced depth - finds positions up to 50, faster response
+            depth: 30 // Reduced depth for Vercel Hobby plan timeout
           }])
-        }, 9000); // 9 second timeout (just under Vercel's 10s limit)
+        }, 6000); // 6 second timeout to leave room for cold start + auth
 
         if (!response.ok) {
           const errorText = await response.text().catch(() => 'Unknown error');
