@@ -22,8 +22,8 @@ export default async function handler(req, res) {
     }
 
     // Limit keywords to prevent timeout (Vercel has 10s limit on Hobby plan)
-    // Reduced to 3 keywords max since each API call can take 2-3 seconds
-    const maxKeywords = 3;
+    // Only 1 keyword at a time to allow deeper search (100 results)
+    const maxKeywords = 1;
     const limitedKeywords = keywords.slice(0, maxKeywords);
     const wasLimited = keywords.length > maxKeywords;
 
@@ -60,7 +60,7 @@ export default async function handler(req, res) {
             keyword,
             location_code: locationCode,
             language_code: 'en',
-            depth: 20 // Reduced depth for speed
+            depth: 100 // Full depth to find positions beyond top 20
           }])
         }, 7000); // 7 second timeout per request
 
@@ -92,12 +92,19 @@ export default async function handler(req, res) {
           }
         });
 
+        // Get top 10 domains for debug
+        const topDomains = items
+          .filter(item => item.type === 'organic')
+          .slice(0, 10)
+          .map(item => ({ rank: item.rank_group, domain: item.domain }));
+
         return {
           index: i,
           keyword,
           positions: keywordPositions,
           volume: searchInfo.search_volume || 0,
-          itemCount: items.length
+          itemCount: items.length,
+          topDomains
         };
       } catch (error) {
         return { index: i, keyword, positions: {}, volume: 0, error: error.message || 'Request failed' };
@@ -120,6 +127,14 @@ export default async function handler(req, res) {
       }
     });
 
+    // Collect debug info from results
+    const debugResults = results.map(r => ({
+      keyword: r.keyword,
+      itemCount: r.itemCount,
+      topDomains: r.topDomains,
+      foundPositions: Object.keys(r.positions).length
+    }));
+
     res.json({
       positions,
       keywordVolumes,
@@ -128,7 +143,11 @@ export default async function handler(req, res) {
         ? `Only fetched first ${maxKeywords} keywords to avoid timeout. Process remaining keywords separately.`
         : undefined,
       errors: errors.length > 0 ? errors : undefined,
-      debug: { keywordsProcessed: limitedKeywords.length, domainsSearched: cleanDomains }
+      debug: {
+        keywordsProcessed: limitedKeywords.length,
+        domainsSearched: cleanDomains,
+        results: debugResults
+      }
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
