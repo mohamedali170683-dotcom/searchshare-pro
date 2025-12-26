@@ -27,8 +27,12 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Keywords and domains required' });
     }
 
-    // Normalize keywords for matching
-    const keywordSet = new Set(keywords.map(k => k.toLowerCase().trim()));
+    // Normalize keywords for matching - create word sets for fuzzy matching
+    const keywordList = keywords.map(k => ({
+      original: k,
+      lower: k.toLowerCase().trim(),
+      words: new Set(k.toLowerCase().trim().split(/\s+/).filter(w => w.length > 2))
+    }));
 
     const authHeader = getAuthHeader(credentials);
 
@@ -61,7 +65,8 @@ export default async function handler(req, res) {
           return {
             domain,
             error: `API ${response.status}: ${errorText.substring(0, 100)}`,
-            rankings: {}
+            rankings: {},
+            sampleKeywords: []
           };
         }
 
@@ -72,44 +77,77 @@ export default async function handler(req, res) {
           return {
             domain,
             error: data.tasks?.[0]?.status_message || 'API task error',
-            rankings: {}
+            rankings: {},
+            sampleKeywords: []
           };
         }
 
         const items = data.tasks?.[0]?.result?.[0]?.items || [];
 
-        // Filter to only keywords we care about and build rankings map
+        // Get sample of top keywords this domain ranks for (for debug)
+        const sampleKeywords = items.slice(0, 20).map(item => ({
+          keyword: item.keyword_data?.keyword,
+          position: item.ranked_serp_element?.serp_item?.rank_group,
+          volume: item.keyword_data?.keyword_info?.search_volume
+        }));
+
+        // Build rankings map with fuzzy matching
         const rankings = {};
         const matchedKeywords = [];
 
         items.forEach(item => {
-          const kw = item.keyword_data?.keyword?.toLowerCase().trim();
-          if (kw && keywordSet.has(kw)) {
-            const position = item.ranked_serp_element?.serp_item?.rank_group;
-            const volume = item.keyword_data?.keyword_info?.search_volume || 0;
+          const apiKw = item.keyword_data?.keyword?.toLowerCase().trim();
+          if (!apiKw) return;
 
-            if (position) {
-              rankings[kw] = {
-                position,
-                volume
-              };
-              matchedKeywords.push(kw);
+          const apiWords = new Set(apiKw.split(/\s+/).filter(w => w.length > 2));
+          const position = item.ranked_serp_element?.serp_item?.rank_group;
+          const volume = item.keyword_data?.keyword_info?.search_volume || 0;
+
+          if (!position) return;
+
+          // Check each keyword for matches
+          keywordList.forEach((kw, kwIdx) => {
+            // Already matched this keyword for this domain
+            if (rankings[kw.lower]) return;
+
+            // Exact match
+            if (apiKw === kw.lower) {
+              rankings[kw.lower] = { position, volume, matchType: 'exact' };
+              matchedKeywords.push({ keyword: kw.original, matched: apiKw, type: 'exact' });
+              return;
             }
-          }
+
+            // Contains match (one contains the other)
+            if (apiKw.includes(kw.lower) || kw.lower.includes(apiKw)) {
+              rankings[kw.lower] = { position, volume, matchType: 'contains' };
+              matchedKeywords.push({ keyword: kw.original, matched: apiKw, type: 'contains' });
+              return;
+            }
+
+            // Word overlap match (at least 2 words in common)
+            const commonWords = [...kw.words].filter(w => apiWords.has(w));
+            if (commonWords.length >= 2 && commonWords.length >= kw.words.size * 0.6) {
+              rankings[kw.lower] = { position, volume, matchType: 'fuzzy' };
+              matchedKeywords.push({ keyword: kw.original, matched: apiKw, type: 'fuzzy', commonWords });
+            }
+          });
         });
 
         return {
           domain,
           rankings,
           totalKeywordsFound: items.length,
-          matchedKeywords: matchedKeywords.length
+          matchedKeywords: matchedKeywords.length,
+          matches: matchedKeywords.slice(0, 10), // First 10 matches for debug
+          sampleKeywords
         };
 
       } catch (error) {
         return {
           domain,
           error: error.message || 'Request failed',
-          rankings: {}
+          rankings: {},
+          sampleKeywords: []
         };
       }
     });
@@ -149,11 +187,13 @@ export default async function handler(req, res) {
       });
     });
 
-    // Collect debug info
+    // Collect debug info - include sample keywords to help user understand what domain ranks for
     const debugResults = results.map(r => ({
       domain: r.domain,
       totalKeywordsFound: r.totalKeywordsFound,
       matchedKeywords: r.matchedKeywords,
+      matches: r.matches, // Shows what keywords matched and how
+      sampleKeywords: r.sampleKeywords, // Top 20 keywords this domain ranks for
       error: r.error
     }));
 
