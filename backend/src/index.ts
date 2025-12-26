@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import apiRoutes from './routes/api.js';
+import projectRoutes from './routes/projects.js';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -11,6 +12,7 @@ app.use(express.json());
 
 // API Routes
 app.use('/api', apiRoutes);
+app.use('/api/projects', projectRoutes);
 
 // Health check
 app.get('/health', (_req, res) => {
