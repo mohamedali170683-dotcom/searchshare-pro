@@ -1,0 +1,154 @@
+// SearchShare Pro Database Schema
+// PostgreSQL with Prisma ORM
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Project - represents a brand analysis project
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  domain      String
+  brandName   String
+  locationCode Int     @default(2276)  // Germany
+  languageCode String  @default("en")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  brandKeywords    BrandKeyword[]
+  categoryKeywords CategoryKeyword[]
+  competitors      Competitor[]
+  snapshots        Snapshot[]
+
+  @@index([domain])
+}
+
+// Brand keywords for Share of Search calculation
+model BrandKeyword {
+  id           String   @id @default(cuid())
+  projectId    String
+  keyword      String
+  searchVolume Int      @default(0)
+  isOwnBrand   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, keyword])
+  @@index([projectId])
+}
+
+// Category/non-brand keywords for market analysis
+model CategoryKeyword {
+  id           String   @id @default(cuid())
+  projectId    String
+  keyword      String
+  searchVolume Int      @default(0)
+  difficulty   Int?
+  groupName    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, keyword])
+  @@index([projectId])
+  @@index([groupName])
+}
+
+// Competitor tracking
+model Competitor {
+  id            String   @id @default(cuid())
+  projectId     String
+  domain        String
+  brandName     String
+  brandKeywords String[] // Array of brand keyword strings
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  project           Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  competitorMetrics CompetitorMetrics[]
+
+  @@unique([projectId, domain])
+  @@index([projectId])
+}
+
+// Historical snapshot of metrics
+model Snapshot {
+  id                 String   @id @default(cuid())
+  projectId          String
+  snapshotDate       DateTime @default(now())
+
+  // Share of Search metrics
+  shareOfSearch      Float
+  brandVolume        Int
+  totalBrandVolume   Int
+
+  // Share of Voice metrics
+  shareOfVoice       Float
+  visibleVolume      Int
+  totalMarketVolume  Int
+
+  // Growth Gap
+  growthGap          Float
+  interpretation     String   // 'growth_potential' | 'missing_opportunities' | 'balanced'
+
+  // Detailed breakdown stored as JSON
+  keywordBreakdown   Json?    // Array of keyword rankings with CTR
+
+  createdAt          DateTime @default(now())
+
+  // Relations
+  project           Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  competitorMetrics CompetitorMetrics[]
+
+  @@index([projectId, snapshotDate])
+  @@index([snapshotDate])
+}
+
+// Competitor metrics per snapshot
+model CompetitorMetrics {
+  id           String   @id @default(cuid())
+  snapshotId   String
+  competitorId String
+
+  // Share of Voice for this competitor
+  shareOfVoice    Float
+  visibleVolume   Int
+  rankedKeywords  Int      // Number of keywords ranking
+  avgPosition     Float?
+
+  // Detailed data stored as JSON
+  keywordRankings Json?
+
+  createdAt    DateTime @default(now())
+
+  // Relations
+  snapshot   Snapshot   @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+  competitor Competitor @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+
+  @@unique([snapshotId, competitorId])
+  @@index([snapshotId])
+  @@index([competitorId])
+}
+
+// API credentials (encrypted in production)
+model ApiCredentials {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  login     String
+  password  String   // Should be encrypted in production
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

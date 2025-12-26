@@ -4,6 +4,24 @@ import { RankedKeyword } from '../types/index.js';
 interface SearchVolumeResult {
   keyword: string;
   searchVolume: number;
+  competition?: number;
+  cpc?: number;
+}
+
+interface SerpCompetitor {
+  domain: string;
+  avgPosition: number;
+  sumPosition: number;
+  intersections: number;
+  competitorRelevance: number;
+}
+
+interface KeywordSuggestion {
+  keyword: string;
+  searchVolume: number;
+  competition?: number;
+  cpc?: number;
+  keywordDifficulty?: number;
 }
 
 export class DataForSEOClient {
@@ -41,7 +59,7 @@ export class DataForSEOClient {
     }
   }
 
-  // Get search volume for brand keywords (for SOS)
+  // Get search volume for keywords (Google Ads data)
   async getSearchVolume(
     keywords: string[],
     locationCode: number,
@@ -54,7 +72,37 @@ export class DataForSEOClient {
     }]);
 
     const results = response.tasks?.[0]?.result || [];
-    return results.map((item: { keyword: string; search_volume?: number }) => ({
+    return results.map((item: {
+      keyword: string;
+      search_volume?: number;
+      competition?: number;
+      cpc?: number;
+    }) => ({
+      keyword: item.keyword,
+      searchVolume: item.search_volume || 0,
+      competition: item.competition,
+      cpc: item.cpc
+    }));
+  }
+
+  // Get DataForSEO refined search volume (clickstream-normalized, more accurate)
+  async getClickstreamSearchVolume(
+    keywords: string[],
+    locationCode: number,
+    languageCode: string
+  ): Promise<SearchVolumeResult[]> {
+    const response = await this.request('/keywords_data/clickstream_data/dataforseo_search_volume/live', [{
+      keywords,
+      location_code: locationCode,
+      language_code: languageCode,
+      use_clickstream: true
+    }]);
+
+    const results = response.tasks?.[0]?.result || [];
+    return results.map((item: {
+      keyword: string;
+      search_volume?: number;
+    }) => ({
       keyword: item.keyword,
       searchVolume: item.search_volume || 0
     }));
@@ -105,6 +153,141 @@ export class DataForSEOClient {
       searchVolume: item.keyword_data.keyword_info.search_volume || 0,
       position: item.ranked_serp_element.serp_item.rank_group,
       url: item.ranked_serp_element.serp_item.relative_url
+    }));
+  }
+
+  // Get SERP competitors for specific keywords
+  async getSerpCompetitors(
+    keywords: string[],
+    locationCode: number,
+    languageCode: string,
+    limit = 100
+  ): Promise<SerpCompetitor[]> {
+    const response = await this.request('/dataforseo_labs/google/serp_competitors/live', [{
+      keywords,
+      location_code: locationCode,
+      language_code: languageCode,
+      limit
+    }]);
+
+    const items = response.tasks?.[0]?.result?.[0]?.items || [];
+
+    return items.map((item: {
+      domain: string;
+      avg_position: number;
+      sum_position: number;
+      intersections: number;
+      competitor_relevance: number;
+    }) => ({
+      domain: item.domain,
+      avgPosition: item.avg_position,
+      sumPosition: item.sum_position,
+      intersections: item.intersections,
+      competitorRelevance: item.competitor_relevance
+    }));
+  }
+
+  // Get keyword suggestions for a domain
+  async getKeywordsForSite(
+    domain: string,
+    locationCode: number,
+    languageCode: string,
+    limit = 500
+  ): Promise<KeywordSuggestion[]> {
+    const cleanDomain = domain
+      .replace(/^(https?:\/\/)?(www\.)?/, '')
+      .split('/')[0]
+      .toLowerCase();
+
+    const response = await this.request('/dataforseo_labs/google/keywords_for_site/live', [{
+      target: cleanDomain,
+      location_code: locationCode,
+      language_code: languageCode,
+      include_serp_info: true,
+      limit
+    }]);
+
+    const items = response.tasks?.[0]?.result?.[0]?.items || [];
+
+    return items.map((item: {
+      keyword: string;
+      keyword_info: {
+        search_volume?: number;
+        competition?: number;
+        cpc?: number;
+      };
+      keyword_properties?: {
+        keyword_difficulty?: number;
+      };
+    }) => ({
+      keyword: item.keyword,
+      searchVolume: item.keyword_info?.search_volume || 0,
+      competition: item.keyword_info?.competition,
+      cpc: item.keyword_info?.cpc,
+      keywordDifficulty: item.keyword_properties?.keyword_difficulty
+    }));
+  }
+
+  // Get related keywords (keyword ideas)
+  async getRelatedKeywords(
+    seedKeyword: string,
+    locationCode: number,
+    languageCode: string,
+    limit = 100
+  ): Promise<KeywordSuggestion[]> {
+    const response = await this.request('/dataforseo_labs/google/related_keywords/live', [{
+      keyword: seedKeyword,
+      location_code: locationCode,
+      language_code: languageCode,
+      limit
+    }]);
+
+    const items = response.tasks?.[0]?.result?.[0]?.items || [];
+
+    return items.map((item: {
+      keyword_data: {
+        keyword: string;
+        keyword_info: {
+          search_volume?: number;
+          competition?: number;
+          cpc?: number;
+        };
+      };
+    }) => ({
+      keyword: item.keyword_data.keyword,
+      searchVolume: item.keyword_data.keyword_info?.search_volume || 0,
+      competition: item.keyword_data.keyword_info?.competition,
+      cpc: item.keyword_data.keyword_info?.cpc
+    }));
+  }
+
+  // Get keyword suggestions from Google Ads
+  async getKeywordIdeas(
+    seedKeywords: string[],
+    locationCode: number,
+    languageCode: string,
+    limit = 100
+  ): Promise<KeywordSuggestion[]> {
+    const response = await this.request('/keywords_data/google_ads/keywords_for_keywords/live', [{
+      keywords: seedKeywords,
+      location_code: locationCode,
+      language_code: languageCode,
+      sort_by: 'search_volume',
+      limit
+    }]);
+
+    const results = response.tasks?.[0]?.result || [];
+
+    return results.map((item: {
+      keyword: string;
+      search_volume?: number;
+      competition?: number;
+      cpc?: number;
+    }) => ({
+      keyword: item.keyword,
+      searchVolume: item.search_volume || 0,
+      competition: item.competition,
+      cpc: item.cpc
     }));
   }
 
